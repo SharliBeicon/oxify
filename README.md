@@ -1,2 +1,2 @@
-# spoxify
+# oxify
 A TUI Spotify client
