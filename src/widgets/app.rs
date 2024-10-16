@@ -1,6 +1,6 @@
 use std::io;
 
-use crate::auth::State;
+use crate::auth;
 use crossterm::event::{self, Event, KeyCode, KeyEvent, KeyEventKind};
 use ratatui::{
     buffer::Buffer,
@@ -17,7 +17,7 @@ use ratatui::{
 
 #[derive(Debug, Default)]
 pub struct App {
-    _state: State,
+    _state: auth::State,
     exit: bool,
 }
 
@@ -48,6 +48,7 @@ impl App {
     fn handle_key_event(&mut self, key_event: KeyEvent) {
         match key_event.code {
             KeyCode::Char('q') => self.exit(),
+            KeyCode::Char(' ') => auth::api::init_login(),
             _ => {}
         }
     }

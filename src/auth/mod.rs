@@ -1,6 +1,13 @@
 pub mod api;
 pub mod http;
 
+#[derive(Debug, Clone)]
+pub enum ChannelMessage {
+    Code(String),
+    Error(String),
+    StopSignal,
+}
+
 #[derive(Debug, Default)]
 pub struct State {
     pub logged: bool,
