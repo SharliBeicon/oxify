@@ -1,10 +1,11 @@
 use std::io;
 
+use crate::auth::State;
 use crossterm::event::{self, Event, KeyCode, KeyEvent, KeyEventKind};
 use ratatui::{
     buffer::Buffer,
     layout::{Alignment, Rect},
-    style::{Style, Stylize},
+    style::Stylize,
     symbols::border,
     text::{Line, Text},
     widgets::{
@@ -16,6 +17,7 @@ use ratatui::{
 
 #[derive(Debug, Default)]
 pub struct App {
+    _state: State,
     exit: bool,
 }
 
@@ -90,9 +92,10 @@ Sp[ox]tify",
                     .alignment(Alignment::Center)
                     .position(Position::Bottom),
             )
-            .padding(Padding::top(
-                (area.height / 2) - (content.height() / 2) as u16,
-            ))
+            .padding(Padding::top(centered_height(
+                content.height() as u16,
+                &area,
+            )))
             .border_set(border::THICK);
 
         Paragraph::new(content)
@@ -100,4 +103,8 @@ Sp[ox]tify",
             .block(block)
             .render(area, buf);
     }
+}
+
+fn centered_height(element_height: u16, area: &Rect) -> u16 {
+    (area.height / 2) - ((element_height + 1) / 2)
 }
