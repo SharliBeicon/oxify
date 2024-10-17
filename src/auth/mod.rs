@@ -3,6 +3,7 @@ pub mod http;
 
 #[derive(Debug, Clone)]
 pub enum ChannelMessage {
+    Ok,
     Code(String),
     Error(String),
 }

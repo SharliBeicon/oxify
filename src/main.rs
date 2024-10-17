@@ -2,6 +2,8 @@ use std::io;
 
 #[actix_web::main]
 async fn main() -> io::Result<()> {
+    dotenvy::dotenv().ok();
+
     let mut terminal = ratatui::init();
     terminal.clear()?;
 

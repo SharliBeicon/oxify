@@ -31,18 +31,13 @@ pub async fn run_server(
     tx: Arc<Sender<ChannelMessage>>,
     mut shutdown_rx: watch::Receiver<()>,
 ) -> () {
+    let tx_c = Arc::clone(&tx);
     let server =
-        HttpServer::new(move || actix_web::App::new().app_data(web::Data::new(Arc::clone(&tx))))
+        HttpServer::new(move || actix_web::App::new().app_data(web::Data::new(Arc::clone(&tx_c))))
             .bind("127.0.0.1:60069")
             .expect("Problem creating an http server")
             .run();
 
-    let server_handle = tokio::spawn(async move {
-        let _ = shutdown_rx.changed().await;
-        server.handle().stop(true).await;
-    });
-
-    server_handle
-        .await
-        .expect("Error while waiting a stop signal")
+    let _ = shutdown_rx.changed().await;
+    server.handle().stop(true).await;
 }
