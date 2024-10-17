@@ -14,7 +14,7 @@ pub struct App {
 }
 
 impl App {
-    pub fn run(&mut self, terminal: &mut DefaultTerminal) -> io::Result<()> {
+    pub async fn run(&mut self, terminal: &mut DefaultTerminal) -> io::Result<()> {
         let mut landing = Landing::default();
         let mut await_login = AwaitLogin::default();
 

@@ -1,13 +1,11 @@
 use std::io;
 
-#[actix_web::main]
+#[tokio::main]
 async fn main() -> io::Result<()> {
-    dotenvy::dotenv().ok();
-
     let mut terminal = ratatui::init();
     terminal.clear()?;
 
-    let app_result = oxify::app::App::default().run(&mut terminal);
+    let app_result = oxify::app::App::default().run(&mut terminal).await;
 
     ratatui::restore();
 
