@@ -1,6 +1,7 @@
 use std::io;
 
-use crate::auth::{self, LoginState};
+use super::{centered_height, CustomWidget};
+use crate::InternalMessage;
 use crossterm::event::{self, Event, KeyCode, KeyEvent, KeyEventKind};
 use ratatui::{
     buffer::Buffer,
@@ -12,62 +13,21 @@ use ratatui::{
         block::{Position, Title},
         Block, Padding, Paragraph, Widget,
     },
-    DefaultTerminal, Frame,
 };
 
-use super::{centered_height, login::AwaitLogin};
+#[derive(Debug, Default, Copy, Clone)]
+pub struct Landing {}
 
-#[derive(Debug, Default)]
-pub struct App {
-    state: auth::State,
-    exit: bool,
-}
-
-impl App {
-    pub fn run(&mut self, terminal: &mut DefaultTerminal) -> io::Result<()> {
-        while !self.exit {
-            match self.state.login_state {
-                LoginState::Out => terminal.draw(|frame| App::draw(&*self, frame))?,
-                LoginState::Loading => terminal.draw(|frame| App::draw(AwaitLogin, frame))?,
-                LoginState::In => terminal.draw(|frame| App::draw(&*self, frame))?,
-            };
-            self.handle_events()?;
-        }
-
-        Ok(())
-    }
-
-    fn draw(widget: impl Widget, frame: &mut Frame) {
-        frame.render_widget(widget, frame.area());
-    }
-
-    fn handle_events(&mut self) -> io::Result<()> {
-        match event::read()? {
-            Event::Key(key_event) if key_event.kind == KeyEventKind::Press => {
-                self.handle_key_event(key_event)
-            }
-            _ => {}
-        };
-        Ok(())
-    }
-
-    fn handle_key_event(&mut self, key_event: KeyEvent) {
+impl Landing {
+    fn handle_key_event(&mut self, key_event: KeyEvent) -> Option<InternalMessage> {
         match key_event.code {
-            KeyCode::Char('q') => self.exit(),
-            KeyCode::Char(' ') => {
-                self.state.login_state = LoginState::Loading;
-                tokio::spawn(auth::api::init_login());
-            }
-            _ => {}
+            KeyCode::Char('q') => Some(InternalMessage::Exit),
+            _ => None,
         }
-    }
-
-    fn exit(&mut self) {
-        self.exit = true;
     }
 }
 
-impl Widget for &App {
+impl Widget for Landing {
     fn render(self, area: Rect, buf: &mut Buffer) {
         let title = Title::from(" Oxify, a TUI Spotify client ".bold());
         let content = Text::from(
@@ -112,5 +72,16 @@ Sp[ox]tify",
             .centered()
             .block(block)
             .render(area, buf);
+    }
+}
+
+impl CustomWidget for Landing {
+    fn handle_events(&mut self) -> io::Result<Option<InternalMessage>> {
+        match event::read()? {
+            Event::Key(key_event) if key_event.kind == KeyEventKind::Press => {
+                Ok(self.handle_key_event(key_event))
+            }
+            _ => Ok(None),
+        }
     }
 }
