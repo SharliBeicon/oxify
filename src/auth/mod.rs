@@ -5,22 +5,19 @@ pub mod http;
 pub enum ChannelMessage {
     Code(String),
     Error(String),
-    StopSignal,
+}
+
+#[derive(Debug, Default)]
+pub enum LoginState {
+    In,
+    #[default]
+    Out,
+    Loading,
 }
 
 #[derive(Debug, Default)]
 pub struct State {
-    pub logged: bool,
+    pub login_state: LoginState,
     pub access_token: Option<String>,
     pub refresh_token: Option<String>,
-}
-
-impl State {
-    pub fn new() -> Self {
-        Self {
-            logged: false,
-            access_token: None,
-            refresh_token: None,
-        }
-    }
 }

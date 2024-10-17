@@ -1,8 +1,8 @@
 use super::ChannelMessage;
 use actix_web::{get, web, HttpResponse, HttpServer};
 use serde::Deserialize;
-use std::{io, sync::Arc};
-use tokio::sync::broadcast::Sender;
+use std::sync::Arc;
+use tokio::sync::{mpsc::Sender, watch};
 
 #[derive(Deserialize)]
 struct CallbackQuery {
@@ -27,12 +27,22 @@ async fn authorization_callback(
     return HttpResponse::BadRequest().body("Missing code or error");
 }
 
-#[actix_web::main]
-pub async fn run_server(tx: Arc<Sender<ChannelMessage>>) -> io::Result<()> {
-    let _rx = tx.subscribe();
+pub async fn run_server(
+    tx: Arc<Sender<ChannelMessage>>,
+    mut shutdown_rx: watch::Receiver<()>,
+) -> () {
+    let server =
+        HttpServer::new(move || actix_web::App::new().app_data(web::Data::new(Arc::clone(&tx))))
+            .bind("127.0.0.1:60069")
+            .expect("Problem creating an http server")
+            .run();
 
-    HttpServer::new(move || actix_web::App::new().app_data(web::Data::new(Arc::clone(&tx))))
-        .bind("127.0.0.1:60069")?
-        .run()
+    let server_handle = tokio::spawn(async move {
+        let _ = shutdown_rx.changed().await;
+        server.handle().stop(true).await;
+    });
+
+    server_handle
         .await
+        .expect("Error while waiting a stop signal")
 }

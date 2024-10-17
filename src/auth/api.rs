@@ -1,11 +1,26 @@
-use std::sync::Arc;
-
 use super::{http::run_server, ChannelMessage};
-use tokio::sync::broadcast;
+use tokio::sync::{mpsc, watch};
 
-pub fn init_login() {
-    let (tx, _rx) = broadcast::channel::<ChannelMessage>(256);
+pub async fn init_login() {
+    let (tx, mut rx) = mpsc::channel::<ChannelMessage>(256);
+    let (shutdown_tx, shutdown_rx) = watch::channel(());
 
-    let tx = Arc::new(tx);
-    tokio::spawn(async move { run_server(Arc::clone(&tx)) });
+    let server_thread = tokio::spawn(run_server(tx.clone().into(), shutdown_rx));
+
+    if let Some(msg) = rx.recv().await {
+        match msg {
+            ChannelMessage::Code(_) => {}
+            ChannelMessage::Error(_) => {}
+        }
+
+        if let Err(err) = shutdown_tx.send(()) {
+            eprintln!(
+                "Error sending a shutdown signal to temporary http server: {:?}",
+                err
+            )
+        }
+        if let Err(err) = server_thread.await {
+            eprintln!("Error joining temporary http server thread: {:?}", err)
+        }
+    }
 }

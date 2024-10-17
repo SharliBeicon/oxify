@@ -1,6 +1,6 @@
 use std::io;
 
-use crate::auth;
+use crate::auth::{self, LoginState};
 use crossterm::event::{self, Event, KeyCode, KeyEvent, KeyEventKind};
 use ratatui::{
     buffer::Buffer,
@@ -15,24 +15,30 @@ use ratatui::{
     DefaultTerminal, Frame,
 };
 
+use super::{centered_height, login::AwaitLogin};
+
 #[derive(Debug, Default)]
 pub struct App {
-    _state: auth::State,
+    state: auth::State,
     exit: bool,
 }
 
 impl App {
     pub fn run(&mut self, terminal: &mut DefaultTerminal) -> io::Result<()> {
         while !self.exit {
-            terminal.draw(|frame| self.draw(frame))?;
+            match self.state.login_state {
+                LoginState::Out => terminal.draw(|frame| App::draw(&*self, frame))?,
+                LoginState::Loading => terminal.draw(|frame| App::draw(AwaitLogin, frame))?,
+                LoginState::In => terminal.draw(|frame| App::draw(&*self, frame))?,
+            };
             self.handle_events()?;
         }
 
         Ok(())
     }
 
-    fn draw(&self, frame: &mut Frame) {
-        frame.render_widget(self, frame.area());
+    fn draw(widget: impl Widget, frame: &mut Frame) {
+        frame.render_widget(widget, frame.area());
     }
 
     fn handle_events(&mut self) -> io::Result<()> {
@@ -48,7 +54,10 @@ impl App {
     fn handle_key_event(&mut self, key_event: KeyEvent) {
         match key_event.code {
             KeyCode::Char('q') => self.exit(),
-            KeyCode::Char(' ') => auth::api::init_login(),
+            KeyCode::Char(' ') => {
+                self.state.login_state = LoginState::Loading;
+                tokio::spawn(auth::api::init_login());
+            }
             _ => {}
         }
     }
@@ -104,8 +113,4 @@ Sp[ox]tify",
             .block(block)
             .render(area, buf);
     }
-}
-
-fn centered_height(element_height: u16, area: &Rect) -> u16 {
-    (area.height / 2) - ((element_height + 1) / 2)
 }

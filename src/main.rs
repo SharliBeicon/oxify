@@ -1,7 +1,8 @@
 use oxify::widgets::app::App;
 use std::io;
 
-fn main() -> io::Result<()> {
+#[actix_web::main]
+async fn main() -> io::Result<()> {
     let mut terminal = ratatui::init();
     terminal.clear()?;
 
