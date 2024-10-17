@@ -5,7 +5,7 @@ use tokio::sync::{mpsc, oneshot};
 pub async fn init_login() {
     let (tx, mut rx) = mpsc::channel::<ChannelMessage>(256);
     let (shutdown_tx, shutdown_rx) = oneshot::channel();
-    let server_thread = tokio::spawn(run_server(tx.clone().into(), shutdown_rx));
+    let server_thread = tokio::spawn(run_server(tx.into(), shutdown_rx));
 
     if let Err(err) = open::that(auth_query()) {
         panic!(
