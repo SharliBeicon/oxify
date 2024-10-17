@@ -1,3 +1,4 @@
+use crossterm::event::{KeyCode, KeyEvent};
 use ratatui::{
     buffer::Buffer,
     layout::{Alignment, Rect},
@@ -10,10 +11,21 @@ use ratatui::{
     },
 };
 
-use super::centered_height;
+use crate::Event;
 
+use super::{centered_height, CustomWidget};
+
+#[derive(Debug, Default, Copy, Clone)]
 pub struct AwaitLogin;
 
+impl CustomWidget for AwaitLogin {
+    fn handle_key_event(&mut self, key_event: KeyEvent) -> Option<Event> {
+        match key_event.code {
+            KeyCode::Char('q') => Some(Event::Exit),
+            _ => None,
+        }
+    }
+}
 impl Widget for AwaitLogin {
     fn render(self, area: Rect, buf: &mut Buffer) {
         let content = Text::from(" Please, follow the instructions on the browser. ".bold());

@@ -1,8 +1,6 @@
-use std::io;
-
 use super::{centered_height, CustomWidget};
-use crate::InternalMessage;
-use crossterm::event::{self, Event, KeyCode, KeyEvent, KeyEventKind};
+use crate::Event;
+use crossterm::event::{KeyCode, KeyEvent};
 use ratatui::{
     buffer::Buffer,
     layout::{Alignment, Rect},
@@ -18,10 +16,11 @@ use ratatui::{
 #[derive(Debug, Default, Copy, Clone)]
 pub struct Landing {}
 
-impl Landing {
-    fn handle_key_event(&mut self, key_event: KeyEvent) -> Option<InternalMessage> {
+impl CustomWidget for Landing {
+    fn handle_key_event(&mut self, key_event: KeyEvent) -> Option<Event> {
         match key_event.code {
-            KeyCode::Char('q') => Some(InternalMessage::Exit),
+            KeyCode::Char('q') => Some(Event::Exit),
+            KeyCode::Char(' ') => Some(Event::LoginAttempt),
             _ => None,
         }
     }
@@ -72,16 +71,5 @@ Sp[ox]tify",
             .centered()
             .block(block)
             .render(area, buf);
-    }
-}
-
-impl CustomWidget for Landing {
-    fn handle_events(&mut self) -> io::Result<Option<InternalMessage>> {
-        match event::read()? {
-            Event::Key(key_event) if key_event.kind == KeyEventKind::Press => {
-                Ok(self.handle_key_event(key_event))
-            }
-            _ => Ok(None),
-        }
     }
 }
