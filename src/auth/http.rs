@@ -16,16 +16,14 @@ async fn authorization_callback(
     tx: web::Data<Arc<Sender<ChannelMessage>>>,
 ) -> HttpResponse {
     if let Some(code) = &query.code {
-        let _ = tx.send(ChannelMessage::Code(code.to_string())).await;
+        let _ = tx.send(ChannelMessage::Code(code.to_string()));
         return HttpResponse::Ok().into();
     }
     if let Some(error) = &query.error {
-        let _ = tx.send(ChannelMessage::Error(error.to_string())).await;
+        let _ = tx.send(ChannelMessage::Error(error.to_string()));
         return HttpResponse::BadRequest().into();
     }
-    let _ = tx
-        .send(ChannelMessage::Error("Missing code or error".to_string()))
-        .await;
+    let _ = tx.send(ChannelMessage::Error("Missing code or error".to_string()));
     return HttpResponse::BadRequest().into();
 }
 
@@ -39,10 +37,13 @@ pub async fn run_server(tx: Arc<Sender<ChannelMessage>>, shutdown_rx: oneshot::R
     .expect("Problem creating an http server")
     .run();
 
-    let server_handle = server.handle();
+    let server_handler = server.handle();
 
-    tokio::select! {
-        _ = shutdown_rx => server_handle.stop(true).await,
-        _ = server => {}
+    tokio::spawn(async move {
+        let _ = server.await;
+    });
+
+    match shutdown_rx.await {
+        _ => server_handler.stop(true).await,
     }
 }
