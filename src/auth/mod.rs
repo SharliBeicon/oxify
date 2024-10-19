@@ -2,7 +2,7 @@ pub mod api;
 pub mod http;
 
 #[derive(Debug, Clone)]
-pub enum ChannelMessage {
+pub enum HttpMessage {
     Ok,
     Code(String),
     Error(String),

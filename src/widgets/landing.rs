@@ -1,5 +1,5 @@
 use super::{centered_height, CustomWidget};
-use crate::Event;
+use crate::OxifyEvent;
 use crossterm::event::{KeyCode, KeyEvent};
 use ratatui::{
     buffer::Buffer,
@@ -13,14 +13,14 @@ use ratatui::{
     },
 };
 
-#[derive(Debug, Default, Copy, Clone)]
+#[derive(Debug, Default, Clone)]
 pub struct Landing {}
 
 impl CustomWidget for Landing {
-    fn handle_key_event(&mut self, key_event: KeyEvent) -> Option<Event> {
+    fn handle_key_event(&self, key_event: KeyEvent) -> Option<OxifyEvent> {
         match key_event.code {
-            KeyCode::Char('q') => Some(Event::Exit),
-            KeyCode::Char(' ') => Some(Event::LoginAttempt),
+            KeyCode::Char('q') => Some(OxifyEvent::Exit),
+            KeyCode::Char(' ') => Some(OxifyEvent::LoginAttempt),
             _ => None,
         }
     }

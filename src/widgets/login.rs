@@ -11,17 +11,17 @@ use ratatui::{
     },
 };
 
-use crate::Event;
+use crate::OxifyEvent;
 
 use super::{centered_height, CustomWidget};
 
-#[derive(Debug, Default, Copy, Clone)]
+#[derive(Debug, Default, Clone)]
 pub struct AwaitLogin;
 
 impl CustomWidget for AwaitLogin {
-    fn handle_key_event(&mut self, key_event: KeyEvent) -> Option<Event> {
+    fn handle_key_event(&self, key_event: KeyEvent) -> Option<OxifyEvent> {
         match key_event.code {
-            KeyCode::Char('q') => Some(Event::Exit),
+            KeyCode::Char('q') => Some(OxifyEvent::Exit),
             _ => None,
         }
     }

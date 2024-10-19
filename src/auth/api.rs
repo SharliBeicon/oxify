@@ -1,14 +1,15 @@
-use super::{http::run_server, ChannelMessage};
+use super::{http::run_server, HttpMessage};
+use crate::{widgets::PopupKind, OxifyEvent, PopupContent};
 use rand::distributions::{Alphanumeric, DistString};
 use tokio::sync::{mpsc, oneshot};
 
-pub async fn init_login() {
-    let (tx, mut rx) = mpsc::channel::<ChannelMessage>(256);
+pub async fn init_login(app_tx: mpsc::Sender<OxifyEvent>) {
+    let (tx, mut rx) = mpsc::channel::<HttpMessage>(256);
     let (shutdown_tx, shutdown_rx) = oneshot::channel();
     let server_thread = tokio::spawn(run_server(tx.into(), shutdown_rx));
 
     if let Err(err) = open::that(auth_query()) {
-        panic!(
+        log::error!(
             "Cannot open the browser to initiate the login process: {:?}",
             err
         );
@@ -16,19 +17,30 @@ pub async fn init_login() {
 
     if let Some(msg) = rx.recv().await {
         match msg {
-            ChannelMessage::Code(code) => println!("Authorization code: {}", code),
-            ChannelMessage::Error(_) => (),
+            HttpMessage::Code(code) => {
+                if let Err(err) = app_tx
+                    .send(OxifyEvent::Popup(PopupContent {
+                        title: " Authorization Token ".to_string(),
+                        content: code.to_string(),
+                        kind: PopupKind::Info,
+                    }))
+                    .await
+                {
+                    log::error!("Error while sending event: {}", err);
+                }
+            }
+            HttpMessage::Error(_) => (),
             _ => (),
         }
 
         if let Err(err) = shutdown_tx.send(()) {
-            eprintln!(
+            log::error!(
                 "Error sending a shutdown signal to temporary http server: {:?}",
                 err
             )
         }
         if let Err(err) = server_thread.await {
-            eprintln!("Error joining temporary http server thread: {:?}", err)
+            log::error!("Error joining temporary http server thread: {:?}", err)
         }
     }
 }

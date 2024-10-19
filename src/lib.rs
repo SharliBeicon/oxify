@@ -1,9 +1,18 @@
+use widgets::PopupKind;
 pub mod app;
 pub mod auth;
 pub mod widgets;
 
-pub enum Event {
+#[derive(Debug)]
+pub struct PopupContent {
+    title: String,
+    content: String,
+    kind: PopupKind,
+}
+
+#[derive(Debug)]
+pub enum OxifyEvent {
     Exit,
-    Update,
     LoginAttempt,
+    Popup(PopupContent),
 }
