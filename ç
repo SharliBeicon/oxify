@@ -5,10 +5,7 @@ use ratatui::{
     layout::{Alignment, Rect},
     style::{Color, Style, Stylize},
     text::{Line, Text},
-    widgets::{
-        block::{Position, Title},
-        Block, Borders, Clear, Paragraph, Widget, Wrap,
-    },
+    widgets::{block::Title, Block, Borders, Clear, Paragraph, Widget, Wrap},
 };
 
 use crate::OxifyEvent;
@@ -42,9 +39,9 @@ impl From<&PopupKind> for PopupStyle {
     fn from(value: &PopupKind) -> Self {
         match value {
             PopupKind::Info => PopupStyle {
-                title_style: Style::new().black(),
-                border_style: Style::new().black(),
-                style: Style::new().on_light_blue().black(),
+                title_style: Style::new().fg(Color::White),
+                border_style: Style::new().bg(Color::Blue),
+                style: Style::default().on_black().blue(),
             },
             PopupKind::Error => PopupStyle {
                 title_style: todo!(),
@@ -65,11 +62,7 @@ impl Widget for Popup<'_> {
         Clear.render(area, buf);
         let block = Block::new()
             .title(self.title)
-            .title(
-                Title::from(" Press any key to close ")
-                    .alignment(Alignment::Center)
-                    .position(Position::Bottom),
-            )
+            .title(Title::from(" Press any key to close ").alignment(Alignment::Center))
             .title_style(PopupStyle::from(&self.kind).title_style)
             .borders(Borders::ALL)
             .border_style(PopupStyle::from(&self.kind).border_style);

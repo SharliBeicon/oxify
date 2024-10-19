@@ -59,26 +59,12 @@ impl App<'_> {
             LoginState::Out => {
                 let landing = &Landing::default();
                 terminal.draw(|frame| self.draw(landing, frame))?;
-                if let Some(event) = handle_events(landing)? {
-                    match event {
-                        OxifyEvent::Exit => self.exit = true,
-                        OxifyEvent::LoginAttempt => {
-                            self.login_state = LoginState::Loading;
-                            tokio::spawn(api::init_login(tx.clone()));
-                        }
-                        _ => (),
-                    }
-                }
+                self.handle_events(landing, tx.clone())?;
             }
             LoginState::Loading => {
                 let await_login = &AwaitLogin::default();
                 terminal.draw(|frame| self.draw(await_login, frame))?;
-                if let Some(event) = handle_events(await_login)? {
-                    match event {
-                        OxifyEvent::Exit => self.exit = true,
-                        _ => (),
-                    }
-                }
+                self.handle_events(await_login, tx.clone())?;
             }
             LoginState::In => todo!(),
         }
@@ -86,29 +72,53 @@ impl App<'_> {
     }
 
     fn draw(&self, widget: &impl CustomWidget, frame: &mut Frame) {
-        let popup_area = popup_area(frame.area(), 20, 40);
+        let popup_area = resize_area(frame.area(), 60, 20);
         frame.render_widget(widget.clone(), frame.area());
 
         if self.active_popup.as_ref().is_some() {
             frame.render_widget(self.active_popup.as_ref().unwrap().clone(), popup_area);
         }
     }
-}
 
-fn handle_events(custom_widget: &impl CustomWidget) -> io::Result<Option<OxifyEvent>> {
-    if crossterm::event::poll(std::time::Duration::new(0, 0))? {
-        match crossterm::event::read()? {
-            crossterm::event::Event::Key(key_event) if key_event.kind == KeyEventKind::Press => {
-                Ok(custom_widget.handle_key_event(key_event))
+    fn handle_events(
+        &mut self,
+        custom_widget: &impl CustomWidget,
+        tx: mpsc::Sender<OxifyEvent>,
+    ) -> io::Result<()> {
+        if crossterm::event::poll(std::time::Duration::new(0, 0))? {
+            match crossterm::event::read()? {
+                crossterm::event::Event::Key(key_event)
+                    if key_event.kind == KeyEventKind::Press =>
+                {
+                    if let Some(popup) = self.active_popup.as_mut() {
+                        if let Some(event) = popup.handle_key_event(key_event) {
+                            match event {
+                                OxifyEvent::Exit => {
+                                    self.active_popup = None;
+                                }
+                                _ => {}
+                            }
+                        }
+                    }
+                    custom_widget
+                        .handle_key_event(key_event)
+                        .map(|key_event| match key_event {
+                            OxifyEvent::Exit => self.exit = true,
+                            OxifyEvent::LoginAttempt => {
+                                self.login_state = LoginState::Loading;
+                                tokio::spawn(api::init_login(tx.clone()));
+                            }
+                            OxifyEvent::Popup(_) => (),
+                        });
+                }
+                _ => (),
             }
-            _ => Ok(None),
         }
-    } else {
-        Ok(None)
+        Ok(())
     }
 }
 
-fn popup_area(area: Rect, percent_x: u16, percent_y: u16) -> Rect {
+fn resize_area(area: Rect, percent_x: u16, percent_y: u16) -> Rect {
     let vertical = Layout::vertical([Constraint::Percentage(percent_y)]).flex(Flex::Center);
     let horizontal = Layout::horizontal([Constraint::Percentage(percent_x)]).flex(Flex::Center);
     let [area] = vertical.areas(area);
