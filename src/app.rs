@@ -5,6 +5,7 @@ use crate::{
 };
 use crossterm::event::KeyEventKind;
 use ratatui::{
+    layout::{Constraint, Flex, Layout, Rect},
     style::Stylize,
     text::{Line, Text},
     DefaultTerminal, Frame,
@@ -30,7 +31,7 @@ impl App<'_> {
     pub fn run(&mut self, terminal: &mut DefaultTerminal) -> io::Result<()> {
         let (tx, mut rx) = mpsc::channel::<OxifyEvent>(256);
 
-        terminal.draw(|frame| draw(&Landing::default(), frame))?;
+        terminal.draw(|frame| self.draw(&Landing::default(), frame))?;
         while !self.exit {
             if let Ok(received) = rx.try_recv() {
                 log::info!("Oxify event received: {:?}", received);
@@ -44,10 +45,6 @@ impl App<'_> {
             }
 
             self.handle_state(tx.clone(), terminal)?;
-
-            if self.active_popup.is_some() {
-                terminal.draw(|frame| draw(self.active_popup.as_ref().unwrap(), frame))?;
-            }
         }
 
         Ok(())
@@ -61,7 +58,7 @@ impl App<'_> {
         match self.login_state {
             LoginState::Out => {
                 let landing = &Landing::default();
-                terminal.draw(|frame| draw(landing, frame))?;
+                terminal.draw(|frame| self.draw(landing, frame))?;
                 if let Some(event) = handle_events(landing)? {
                     match event {
                         OxifyEvent::Exit => self.exit = true,
@@ -75,7 +72,7 @@ impl App<'_> {
             }
             LoginState::Loading => {
                 let await_login = &AwaitLogin::default();
-                terminal.draw(|frame| draw(await_login, frame))?;
+                terminal.draw(|frame| self.draw(await_login, frame))?;
                 if let Some(event) = handle_events(await_login)? {
                     match event {
                         OxifyEvent::Exit => self.exit = true,
@@ -87,10 +84,15 @@ impl App<'_> {
         }
         Ok(())
     }
-}
 
-fn draw(widget: &impl CustomWidget, frame: &mut Frame) {
-    frame.render_widget(widget.clone(), frame.area());
+    fn draw(&self, widget: &impl CustomWidget, frame: &mut Frame) {
+        let popup_area = popup_area(frame.area(), 20, 40);
+        frame.render_widget(widget.clone(), frame.area());
+
+        if self.active_popup.as_ref().is_some() {
+            frame.render_widget(self.active_popup.as_ref().unwrap().clone(), popup_area);
+        }
+    }
 }
 
 fn handle_events(custom_widget: &impl CustomWidget) -> io::Result<Option<OxifyEvent>> {
@@ -104,4 +106,12 @@ fn handle_events(custom_widget: &impl CustomWidget) -> io::Result<Option<OxifyEv
     } else {
         Ok(None)
     }
+}
+
+fn popup_area(area: Rect, percent_x: u16, percent_y: u16) -> Rect {
+    let vertical = Layout::vertical([Constraint::Percentage(percent_y)]).flex(Flex::Center);
+    let horizontal = Layout::horizontal([Constraint::Percentage(percent_x)]).flex(Flex::Center);
+    let [area] = vertical.areas(area);
+    let [area] = horizontal.areas(area);
+    area
 }
