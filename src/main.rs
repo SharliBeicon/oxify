@@ -1,19 +1,24 @@
+use chrono::{DateTime, Utc};
 use simplelog::*;
-use std::fs::File;
+use std::fs::OpenOptions;
 use std::io;
+use std::time::SystemTime;
 
 fn main() -> io::Result<()> {
-    WriteLogger::init(
-        LevelFilter::Info,
-        Config::default(),
-        File::create("oxify.log").unwrap(),
-    )
-    .unwrap();
+    dotenvy::dotenv().ok();
+
+    let dt: DateTime<Utc> = SystemTime::now().into();
+    let filename = dt.format("/tmp/%d-%m-%Y-oxify.log").to_string();
+    let file = OpenOptions::new()
+        .create(true)
+        .append(true)
+        .open(filename)?;
+    WriteLogger::init(LevelFilter::Info, Config::default(), file).unwrap();
 
     let mut terminal = ratatui::init();
     terminal.clear()?;
 
-    let app_result = oxify::app::App::new().run(&mut terminal);
+    let app_result = oxify::App::new().run(&mut terminal);
 
     ratatui::restore();
 

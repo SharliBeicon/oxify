@@ -1,6 +1,7 @@
 pub mod api;
-pub mod client;
-pub mod server;
+mod client;
+mod config;
+mod server;
 
 #[derive(Debug, Clone)]
 pub enum HttpMessage {

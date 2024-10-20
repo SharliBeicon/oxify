@@ -1,7 +1,8 @@
-use widgets::PopupKind;
-pub mod app;
+mod app;
 pub mod auth;
 pub mod widgets;
+pub use app::App;
+use widgets::PopupKind;
 
 #[derive(Debug)]
 pub struct PopupContent {

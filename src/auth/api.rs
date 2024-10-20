@@ -3,18 +3,20 @@ use std::{
     thread,
 };
 
-use super::{client, server, HttpMessage};
+use super::{client, config::Config, server, HttpMessage};
 use crate::OxifyEvent;
 use rand::distributions::{Alphanumeric, DistString};
 
 pub fn init_login(app_tx: Sender<OxifyEvent>) {
+    let config = Config::new();
+
     let (tx, mut rx) = channel::<HttpMessage>();
 
     let state = Alphanumeric.sample_string(&mut rand::thread_rng(), 16);
     let state_clone = state.clone();
     let server_thread = thread::spawn(move || server::run(tx.into(), state_clone));
 
-    if let Err(err) = open::that(auth_query(&state)) {
+    if let Err(err) = open::that(auth_query(&state, config.client_id)) {
         log::error!(
             "Cannot open the browser to initiate the login process: {:?}",
             err
@@ -23,7 +25,7 @@ pub fn init_login(app_tx: Sender<OxifyEvent>) {
 
     if let Ok(msg) = rx.recv() {
         match msg {
-            HttpMessage::Code(code) => match client::finish_login(code) {
+            HttpMessage::Code(code) => match client::finish_login(code, config.secret_id) {
                 Ok((access_token, refresh_toke)) => (),
                 Err(err) => (),
             },
@@ -38,8 +40,7 @@ pub fn init_login(app_tx: Sender<OxifyEvent>) {
     }
 }
 
-fn auth_query(state: &str) -> String {
-    let client_id = "a4df561fbabb40a3b3ead45196990b6d";
+fn auth_query(state: &str, client_id: &str) -> String {
     let response_type = "code";
     let redirect_uri = "http://localhost:60069/authorization/callback";
 
