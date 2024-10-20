@@ -1,5 +1,5 @@
 use crate::{
-    auth::{api, LoginState},
+    auth::{api, AuthState, LoginState},
     widgets::{login::AwaitLogin, CustomWidget, Landing, Popup},
     OxifyEvent,
 };
@@ -10,13 +10,16 @@ use ratatui::{
     text::{Line, Text},
     DefaultTerminal, Frame,
 };
-use std::io;
-use tokio::sync::mpsc;
+use std::{
+    io,
+    sync::mpsc::{channel, Sender},
+    thread,
+};
 
 #[derive(Debug)]
 pub struct App<'a> {
     exit: bool,
-    login_state: LoginState,
+    auth_state: AuthState,
     active_popup: Option<Popup<'a>>,
 }
 
@@ -24,12 +27,16 @@ impl App<'_> {
     pub fn new() -> Self {
         Self {
             exit: false,
-            login_state: LoginState::Out,
+            auth_state: AuthState {
+                login_state: LoginState::Out,
+                ..AuthState::default()
+            },
             active_popup: None,
         }
     }
+
     pub fn run(&mut self, terminal: &mut DefaultTerminal) -> io::Result<()> {
-        let (tx, mut rx) = mpsc::channel::<OxifyEvent>(256);
+        let (tx, rx) = channel::<OxifyEvent>();
 
         terminal.draw(|frame| self.draw(&Landing::default(), frame))?;
         while !self.exit {
@@ -52,10 +59,10 @@ impl App<'_> {
 
     fn handle_state(
         &mut self,
-        tx: mpsc::Sender<OxifyEvent>,
+        tx: Sender<OxifyEvent>,
         terminal: &mut DefaultTerminal,
     ) -> io::Result<()> {
-        match self.login_state {
+        match self.auth_state.login_state {
             LoginState::Out => {
                 let landing = &Landing::default();
                 terminal.draw(|frame| self.draw(landing, frame))?;
@@ -83,7 +90,7 @@ impl App<'_> {
     fn handle_events(
         &mut self,
         custom_widget: &impl CustomWidget,
-        tx: mpsc::Sender<OxifyEvent>,
+        tx: Sender<OxifyEvent>,
     ) -> io::Result<()> {
         if crossterm::event::poll(std::time::Duration::new(0, 0))? {
             match crossterm::event::read()? {
@@ -100,13 +107,14 @@ impl App<'_> {
                             }
                         }
                     }
+                    let tx_clone = tx.clone();
                     custom_widget
                         .handle_key_event(key_event)
                         .map(|key_event| match key_event {
                             OxifyEvent::Exit => self.exit = true,
                             OxifyEvent::LoginAttempt => {
-                                self.login_state = LoginState::Loading;
-                                tokio::spawn(api::init_login(tx.clone()));
+                                self.auth_state.login_state = LoginState::Loading;
+                                thread::spawn(|| api::init_login(tx_clone));
                             }
                             OxifyEvent::Popup(_) => (),
                         });

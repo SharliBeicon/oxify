@@ -2,8 +2,7 @@ use simplelog::*;
 use std::fs::File;
 use std::io;
 
-#[tokio::main]
-async fn main() -> io::Result<()> {
+fn main() -> io::Result<()> {
     WriteLogger::init(
         LevelFilter::Info,
         Config::default(),

@@ -3,7 +3,7 @@ use derive_setters::Setters;
 use ratatui::{
     buffer::Buffer,
     layout::{Alignment, Rect},
-    style::{Color, Style, Stylize},
+    style::{Style, Stylize},
     text::{Line, Text},
     widgets::{
         block::{Position, Title},

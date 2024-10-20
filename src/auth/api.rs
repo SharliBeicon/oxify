@@ -1,52 +1,44 @@
-use super::{http::run_server, HttpMessage};
-use crate::{widgets::PopupKind, OxifyEvent, PopupContent};
+use std::{
+    sync::mpsc::{channel, Sender},
+    thread,
+};
+
+use super::{client, server, HttpMessage};
+use crate::OxifyEvent;
 use rand::distributions::{Alphanumeric, DistString};
-use tokio::sync::{mpsc, oneshot};
 
-pub async fn init_login(app_tx: mpsc::Sender<OxifyEvent>) {
-    let (tx, mut rx) = mpsc::channel::<HttpMessage>(256);
-    let (shutdown_tx, shutdown_rx) = oneshot::channel();
-    let server_thread = tokio::spawn(run_server(tx.into(), shutdown_rx));
+pub fn init_login(app_tx: Sender<OxifyEvent>) {
+    let (tx, mut rx) = channel::<HttpMessage>();
 
-    if let Err(err) = open::that(auth_query()) {
+    let state = Alphanumeric.sample_string(&mut rand::thread_rng(), 16);
+    let state_clone = state.clone();
+    let server_thread = thread::spawn(move || server::run(tx.into(), state_clone));
+
+    if let Err(err) = open::that(auth_query(&state)) {
         log::error!(
             "Cannot open the browser to initiate the login process: {:?}",
             err
         );
     }
 
-    if let Some(msg) = rx.recv().await {
+    if let Ok(msg) = rx.recv() {
         match msg {
-            HttpMessage::Code(code) => {
-                if let Err(err) = app_tx
-                    .send(OxifyEvent::Popup(PopupContent {
-                        title: " Authorization Token ".to_string(),
-                        content: code.to_string(),
-                        kind: PopupKind::Info,
-                    }))
-                    .await
-                {
-                    log::error!("Error while sending event: {}", err);
-                }
+            HttpMessage::Code(code) => match client::finish_login(code) {
+                Ok((access_token, refresh_toke)) => (),
+                Err(err) => (),
+            },
+            HttpMessage::Error(err) => {
+                log::error!("Error receiving the authorization code: {}", err)
             }
-            HttpMessage::Error(_) => (),
-            _ => (),
         }
 
-        if let Err(err) = shutdown_tx.send(()) {
-            log::error!(
-                "Error sending a shutdown signal to temporary http server: {:?}",
-                err
-            )
-        }
-        if let Err(err) = server_thread.await {
+        if let Err(err) = server_thread.join() {
             log::error!("Error joining temporary http server thread: {:?}", err)
         }
     }
 }
 
-fn auth_query() -> String {
-    let state = Alphanumeric.sample_string(&mut rand::thread_rng(), 16);
+fn auth_query(state: &str) -> String {
     let client_id = "a4df561fbabb40a3b3ead45196990b6d";
     let response_type = "code";
     let redirect_uri = "http://localhost:60069/authorization/callback";

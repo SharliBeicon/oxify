@@ -1,9 +1,9 @@
 pub mod api;
-pub mod http;
+pub mod client;
+pub mod server;
 
 #[derive(Debug, Clone)]
 pub enum HttpMessage {
-    Ok,
     Code(String),
     Error(String),
 }
@@ -17,7 +17,7 @@ pub enum LoginState {
 }
 
 #[derive(Debug, Default)]
-pub struct State {
+pub struct AuthState {
     pub login_state: LoginState,
     pub access_token: Option<String>,
     pub refresh_token: Option<String>,
