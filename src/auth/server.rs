@@ -8,8 +8,13 @@ use std::{
 pub fn run(tx: Arc<Sender<HttpMessage>>, state: String) {
     let listener = match TcpListener::bind("127.0.0.1:60069") {
         Ok(listener) => listener,
-        Err(e) => {
-            log::error!("Cannot setup a local connection: {}", e);
+        Err(err) => {
+            if let Err(inner_err) = tx.send(HttpMessage::Error(format!(
+                "Cannot setup a local connection: {}",
+                err
+            ))) {
+                log::error!("Error sending HttpMessage to channel: {}", inner_err);
+            }
             return;
         }
     };
@@ -18,24 +23,35 @@ pub fn run(tx: Arc<Sender<HttpMessage>>, state: String) {
         let stream = match stream {
             Ok(stream) => stream,
             Err(err) => {
-                log::error!("Error getting a connection stream: {}", err);
+                if let Err(inner_err) = tx.send(HttpMessage::Error(format!(
+                    "Error getting a connection stream: {}",
+                    err
+                ))) {
+                    log::error!("Error sending HttpMessage to channel: {}", inner_err);
+                }
                 return;
             }
         };
 
-        match handle_connection(stream, &state) {
-            Err(err) => log::warn!("Unrecognized HTTP Callback response: {}", err),
-            Ok(code) => {
-                if let Err(err) = tx.send(HttpMessage::Code(code)) {
-                    log::error!("Error sending callback response to client: {}", err);
+        match handle_authorization_connection(stream, &state) {
+            Err(err) => {
+                if let Err(inner_err) = tx.send(HttpMessage::Error(format!(
+                    "Error handling callback connection: {}",
+                    err.to_string()
+                ))) {
+                    log::error!("Error sending callback response to client: {}", inner_err);
                 }
-                break;
+            }
+            Ok(code) => {
+                if let Err(inner_err) = tx.send(HttpMessage::AuthCode(code)) {
+                    log::error!("Error sending callback response to client: {}", inner_err);
+                }
             }
         }
     }
 }
 
-fn handle_connection(mut stream: TcpStream, state: &str) -> io::Result<String> {
+fn handle_authorization_connection(mut stream: TcpStream, state: &str) -> io::Result<String> {
     let buf_reader = BufReader::new(&mut stream);
     let request = if let Some(request) = buf_reader.lines().next() {
         request
@@ -46,7 +62,7 @@ fn handle_connection(mut stream: TcpStream, state: &str) -> io::Result<String> {
         ))
     }?;
 
-    let code = parse_http(request, state)?;
+    let code = parse_authorization_http(request, state)?;
 
     //TODO: Replace this content with a proper html
     let content = "Gracias Maki, vuelve a la app.";
@@ -62,7 +78,7 @@ fn handle_connection(mut stream: TcpStream, state: &str) -> io::Result<String> {
     Ok(code)
 }
 
-fn parse_http(request: String, state: &str) -> io::Result<String> {
+fn parse_authorization_http(request: String, state: &str) -> io::Result<String> {
     if !request.starts_with("GET /authorization/callback?") {
         return Err(io::Error::new(
             io::ErrorKind::InvalidData,

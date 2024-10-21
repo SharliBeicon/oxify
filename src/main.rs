@@ -5,8 +5,6 @@ use std::io;
 use std::time::SystemTime;
 
 fn main() -> io::Result<()> {
-    dotenvy::dotenv().ok();
-
     let dt: DateTime<Utc> = SystemTime::now().into();
     let filename = dt.format("/tmp/%d-%m-%Y-oxify.log").to_string();
     let file = OpenOptions::new()

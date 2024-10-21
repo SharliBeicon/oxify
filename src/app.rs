@@ -42,12 +42,16 @@ impl App<'_> {
         while !self.exit {
             if let Ok(received) = rx.try_recv() {
                 log::info!("Oxify event received: {:?}", received);
-                if let OxifyEvent::Popup(popup_content) = received {
-                    self.active_popup = Some(Popup {
-                        title: Line::from(popup_content.title.bold()),
-                        content: Text::from(popup_content.content),
-                        kind: popup_content.kind,
-                    })
+                match received {
+                    OxifyEvent::Popup(popup_content) => {
+                        self.active_popup = Some(Popup {
+                            title: Line::from(popup_content.title.bold()),
+                            content: Text::from(popup_content.content),
+                            kind: popup_content.kind,
+                        })
+                    }
+                    OxifyEvent::AuthInfo(auth_state) => self.auth_state = auth_state,
+                    _ => (),
                 }
             }
 
@@ -73,7 +77,7 @@ impl App<'_> {
                 terminal.draw(|frame| self.draw(await_login, frame))?;
                 self.handle_events(await_login, tx.clone())?;
             }
-            LoginState::In => todo!(),
+            LoginState::In => (),
         }
         Ok(())
     }
@@ -116,7 +120,7 @@ impl App<'_> {
                                 self.auth_state.login_state = LoginState::Loading;
                                 thread::spawn(|| api::init_login(tx_clone));
                             }
-                            OxifyEvent::Popup(_) => (),
+                            _ => (),
                         });
                 }
                 _ => (),

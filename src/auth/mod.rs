@@ -5,7 +5,7 @@ mod server;
 
 #[derive(Debug, Clone)]
 pub enum HttpMessage {
-    Code(String),
+    AuthCode(String),
     Error(String),
 }
 
@@ -22,4 +22,5 @@ pub struct AuthState {
     pub login_state: LoginState,
     pub access_token: Option<String>,
     pub refresh_token: Option<String>,
+    pub expiration_time: Option<i32>,
 }

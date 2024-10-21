@@ -4,13 +4,13 @@ use std::{
 };
 
 use super::{client, config::Config, server, HttpMessage};
-use crate::OxifyEvent;
+use crate::{auth::AuthState, OxifyEvent};
 use rand::distributions::{Alphanumeric, DistString};
 
 pub fn init_login(app_tx: Sender<OxifyEvent>) {
     let config = Config::new();
 
-    let (tx, mut rx) = channel::<HttpMessage>();
+    let (tx, rx) = channel::<HttpMessage>();
 
     let state = Alphanumeric.sample_string(&mut rand::thread_rng(), 16);
     let state_clone = state.clone();
@@ -23,19 +23,36 @@ pub fn init_login(app_tx: Sender<OxifyEvent>) {
         );
     }
 
-    if let Ok(msg) = rx.recv() {
+    while let Ok(msg) = rx.recv() {
         match msg {
-            HttpMessage::Code(code) => match client::finish_login(code, config.secret_id) {
-                Ok((access_token, refresh_toke)) => (),
-                Err(err) => (),
-            },
-            HttpMessage::Error(err) => {
-                log::error!("Error receiving the authorization code: {}", err)
+            HttpMessage::AuthCode(code) => {
+                match client::finish_login(code, config.client_id, config.secret_id) {
+                    Err(err) => {
+                        if let Err(err) = app_tx.send(OxifyEvent::AuthInfo(AuthState::default())) {
+                            log::error!(
+                                "Error sending login information through the channel: {}",
+                                err
+                            );
+                        }
+                        log::error!("Could not complete login process: {}", err)
+                    }
+                    Ok(auth_state) => {
+                        if let Err(err) = app_tx.send(OxifyEvent::AuthInfo(auth_state)) {
+                            log::error!(
+                                "Error sending login information through the channel: {}",
+                                err
+                            );
+                        }
+                    }
+                }
+                if let Err(_) = server_thread.join() {
+                    log::error!("Error joining server thread");
+                }
+                break;
             }
-        }
-
-        if let Err(err) = server_thread.join() {
-            log::error!("Error joining temporary http server thread: {:?}", err)
+            HttpMessage::Error(err) => {
+                log::error!("Error receiving info from server: {}", err)
+            }
         }
     }
 }
