@@ -1,7 +1,8 @@
 mod app;
-pub mod auth;
-pub mod widgets;
 pub use app::App;
+pub mod auth;
+pub mod player;
+pub mod widgets;
 use auth::AuthState;
 use widgets::PopupKind;
 

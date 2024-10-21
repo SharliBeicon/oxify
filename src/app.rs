@@ -1,6 +1,6 @@
 use crate::{
     auth::{api, AuthState, LoginState},
-    widgets::{login::AwaitLogin, CustomWidget, Landing, Popup},
+    widgets::{login::AwaitLogin, CustomWidget, Landing, Player, Popup},
     OxifyEvent,
 };
 use crossterm::event::KeyEventKind;
@@ -70,14 +70,18 @@ impl App<'_> {
             LoginState::Out => {
                 let landing = &Landing::default();
                 terminal.draw(|frame| self.draw(landing, frame))?;
-                self.handle_events(landing, tx.clone())?;
+                self.handle_events(landing, tx)?;
             }
             LoginState::Loading => {
                 let await_login = &AwaitLogin::default();
                 terminal.draw(|frame| self.draw(await_login, frame))?;
-                self.handle_events(await_login, tx.clone())?;
+                self.handle_events(await_login, tx)?;
             }
-            LoginState::In => (),
+            LoginState::In => {
+                let player = &Player::default();
+                terminal.draw(|frame| self.draw(player, frame))?;
+                self.handle_events(player, tx.clone())?;
+            }
         }
         Ok(())
     }

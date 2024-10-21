@@ -65,7 +65,7 @@ fn handle_authorization_connection(mut stream: TcpStream, state: &str) -> io::Re
     let code = parse_authorization_http(request, state)?;
 
     //TODO: Replace this content with a proper html
-    let content = "Gracias Maki, vuelve a la app.";
+    let content = include_str!("../../html/auth_response.html");
     let length = content.len();
 
     let response = format!(

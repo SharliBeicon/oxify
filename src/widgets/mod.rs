@@ -2,6 +2,9 @@ use crate::OxifyEvent;
 use crossterm::event::KeyEvent;
 use ratatui::{layout::Rect, widgets::Widget};
 
+mod player;
+pub use player::Player;
+
 mod landing;
 pub use landing::Landing;
 
