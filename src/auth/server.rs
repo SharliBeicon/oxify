@@ -46,6 +46,8 @@ pub fn run(tx: Arc<Sender<HttpMessage>>, state: String) {
                 if let Err(inner_err) = tx.send(HttpMessage::AuthCode(code)) {
                     log::error!("Error sending callback response to client: {}", inner_err);
                 }
+
+                break;
             }
         }
     }
@@ -64,8 +66,7 @@ fn handle_authorization_connection(mut stream: TcpStream, state: &str) -> io::Re
 
     let code = parse_authorization_http(request, state)?;
 
-    //TODO: Replace this content with a proper html
-    let content = include_str!("../../html/auth_response.html");
+    let content = include_str!("../../include/auth_response.html");
     let length = content.len();
 
     let response = format!(

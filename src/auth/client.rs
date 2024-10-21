@@ -22,7 +22,7 @@ static AGENT: LazyLock<ureq::Agent> = LazyLock::new(|| {
         .build()
 });
 
-pub fn finish_login(code: String, client_id: &str, secret_id: &str) -> io::Result<AuthState> {
+pub fn get_tokens(code: String, client_id: &str, secret_id: &str) -> io::Result<AuthState> {
     let secrets_encoded = BASE64_STANDARD.encode(format!("{}:{}", client_id, secret_id));
     match AGENT
         .post("https://accounts.spotify.com/api/token")
@@ -37,6 +37,26 @@ pub fn finish_login(code: String, client_id: &str, secret_id: &str) -> io::Resul
                 "redirect_uri",
                 "http://localhost:60069/authorization/callback",
             ),
+        ]) {
+        Err(err) => Err(io::Error::new(io::ErrorKind::PermissionDenied, err)),
+        Ok(response) => Ok(parse_response(response)?),
+    }
+}
+
+pub fn refresh_token(auth_state: &AuthState, client_id: &str) -> io::Result<AuthState> {
+    if let None = auth_state.refresh_token {
+        return Err(io::Error::new(
+            io::ErrorKind::PermissionDenied,
+            "Refresh Token not found",
+        ));
+    }
+
+    match AGENT
+        .post("https://accounts.spotify.com/api/token")
+        .send_form(&[
+            ("grant_type", "refresh_token"),
+            ("refresh_token", auth_state.refresh_token.as_ref().unwrap()),
+            ("client_id", client_id),
         ]) {
         Err(err) => Err(io::Error::new(io::ErrorKind::PermissionDenied, err)),
         Ok(response) => Ok(parse_response(response)?),

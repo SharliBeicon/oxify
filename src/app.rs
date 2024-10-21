@@ -122,7 +122,7 @@ impl App<'_> {
                             OxifyEvent::Exit => self.exit = true,
                             OxifyEvent::LoginAttempt => {
                                 self.auth_state.login_state = LoginState::Loading;
-                                thread::spawn(|| api::init_login(tx_clone));
+                                thread::spawn(|| api::login(tx_clone));
                             }
                             _ => (),
                         });

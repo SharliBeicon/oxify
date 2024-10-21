@@ -9,7 +9,7 @@ pub enum HttpMessage {
     Error(String),
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Clone)]
 pub enum LoginState {
     In,
     #[default]
@@ -17,7 +17,7 @@ pub enum LoginState {
     Loading,
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Clone)]
 pub struct AuthState {
     pub login_state: LoginState,
     pub access_token: Option<String>,

@@ -1,13 +1,20 @@
 use std::{
     sync::mpsc::{channel, Sender},
     thread,
+    time::Duration,
 };
 
-use super::{client, config::Config, server, HttpMessage};
+use super::{
+    client::{self, refresh_token},
+    config::Config,
+    server, HttpMessage,
+};
 use crate::{auth::AuthState, OxifyEvent};
 use rand::distributions::{Alphanumeric, DistString};
 
-pub fn init_login(app_tx: Sender<OxifyEvent>) {
+const ONE_MINUTE: i32 = 60;
+
+pub fn login(app_tx: Sender<OxifyEvent>) {
     let config = Config::new();
 
     let (tx, rx) = channel::<HttpMessage>();
@@ -26,7 +33,7 @@ pub fn init_login(app_tx: Sender<OxifyEvent>) {
     while let Ok(msg) = rx.recv() {
         match msg {
             HttpMessage::AuthCode(code) => {
-                match client::finish_login(code, config.client_id, config.secret_id) {
+                match client::get_tokens(code, config.client_id, config.secret_id) {
                     Err(err) => {
                         if let Err(err) = app_tx.send(OxifyEvent::AuthInfo(AuthState::default())) {
                             log::error!(
@@ -37,21 +44,55 @@ pub fn init_login(app_tx: Sender<OxifyEvent>) {
                         log::error!("Could not complete login process: {}", err)
                     }
                     Ok(auth_state) => {
-                        if let Err(err) = app_tx.send(OxifyEvent::AuthInfo(auth_state)) {
+                        if let Err(err) = app_tx.send(OxifyEvent::AuthInfo(auth_state.clone())) {
                             log::error!(
                                 "Error sending login information through the channel: {}",
                                 err
                             );
                         }
+
+                        if let Err(_) = server_thread.join() {
+                            log::error!("Error joining server thread");
+                        }
+
+                        refresh_task(&auth_state, config.client_id, app_tx);
                     }
-                }
-                if let Err(_) = server_thread.join() {
-                    log::error!("Error joining server thread");
                 }
                 break;
             }
             HttpMessage::Error(err) => {
                 log::error!("Error receiving info from server: {}", err)
+            }
+        }
+    }
+}
+
+fn refresh_task(auth_state: &AuthState, client_id: &str, app_tx: Sender<OxifyEvent>) {
+    if let None = auth_state.expiration_time {
+        log::error!("A valid auth state needs an expiration time");
+        return;
+    }
+    let mut expiration_time = auth_state.expiration_time.unwrap();
+    loop {
+        thread::sleep(Duration::from_secs((expiration_time - ONE_MINUTE) as u64));
+
+        match refresh_token(auth_state, client_id) {
+            Ok(new_state) => {
+                if let None = new_state.expiration_time {
+                    log::error!("A valid auth state needs an expiration time");
+                    return;
+                }
+                expiration_time = new_state.expiration_time.unwrap();
+                if let Err(err) = app_tx.send(OxifyEvent::AuthInfo(new_state.clone())) {
+                    log::error!(
+                        "Error sending login information through the channel: {}",
+                        err
+                    );
+                }
+            }
+            Err(err) => {
+                log::error!("Cannot refresh auth token: {}", err);
+                return;
             }
         }
     }
