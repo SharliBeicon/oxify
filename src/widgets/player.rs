@@ -1,15 +1,13 @@
+use std::rc::Rc;
+
 use crossterm::event::{KeyCode, KeyEvent};
 use ratatui::{
     buffer::Buffer,
-    layout::{Alignment, Rect},
+    layout::Rect,
     prelude::*,
-    symbols::border,
-    text::{Line, Text},
-    widgets::{
-        block::{Position, Title},
-        Block, Padding, Paragraph, Widget,
-    },
+    widgets::{block::Title, Block, Padding, Paragraph, Widget},
 };
+use symbols::border;
 
 use crate::OxifyEvent;
 
@@ -25,18 +23,20 @@ impl CustomWidget for Player {
             _ => None,
         }
     }
+
+    fn layout(&self, frame: &Frame) -> Rc<[Rect]> {
+        Layout::default()
+            .direction(Direction::Vertical)
+            .constraints(vec![Constraint::Percentage(50), Constraint::Percentage(50)])
+            .split(frame.area())
+    }
 }
 impl Widget for Player {
     fn render(self, area: Rect, buf: &mut Buffer) {
-        let content = Text::from(" YOU ARE LOGGED IN CONGRATULATIONS ".bold());
-        let instructions = Title::from(Line::from(vec![" Quit ".into(), "<Q> ".blue().bold()]));
-
+        let title = Title::from(" Player ".bold());
+        let content = Text::from(" Player ".bold());
         let block = Block::bordered()
-            .title(
-                instructions
-                    .alignment(Alignment::Center)
-                    .position(Position::Bottom),
-            )
+            .title(title.alignment(Alignment::Center))
             .padding(Padding::top(centered_height(
                 content.height() as u16,
                 &area,

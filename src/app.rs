@@ -27,10 +27,7 @@ impl App<'_> {
     pub fn new() -> Self {
         Self {
             exit: false,
-            auth_state: AuthState {
-                login_state: LoginState::Out,
-                ..AuthState::default()
-            },
+            auth_state: AuthState::default(),
             active_popup: None,
         }
     }
@@ -88,11 +85,11 @@ impl App<'_> {
 
     fn draw(&self, widget: &impl CustomWidget, frame: &mut Frame) {
         let popup_area = resize_area(frame.area(), 60, 20);
-        frame.render_widget(widget.clone(), frame.area());
+        frame.render_widget(widget.clone(), widget.layout(&*frame)[0]);
 
-        if self.active_popup.as_ref().is_some() {
-            frame.render_widget(self.active_popup.as_ref().unwrap().clone(), popup_area);
-        }
+        self.active_popup.as_ref().map(|popup| {
+            frame.render_widget(popup.clone(), popup_area);
+        });
     }
 
     fn handle_events(

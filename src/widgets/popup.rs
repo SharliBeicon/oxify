@@ -1,3 +1,5 @@
+use std::rc::Rc;
+
 use crossterm::event::KeyEvent;
 use derive_setters::Setters;
 use ratatui::{
@@ -9,6 +11,7 @@ use ratatui::{
         block::{Position, Title},
         Block, Borders, Clear, Paragraph, Widget, Wrap,
     },
+    Frame,
 };
 
 use crate::OxifyEvent;
@@ -86,5 +89,8 @@ impl CustomWidget for Popup<'_> {
         match key_event.code {
             _ => Some(OxifyEvent::Exit),
         }
+    }
+    fn layout(&self, frame: &Frame<'_>) -> Rc<[Rect]> {
+        Rc::new([frame.area()])
     }
 }

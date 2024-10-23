@@ -1,9 +1,10 @@
-use base64::prelude::*;
-use serde::Deserialize;
-use std::{io, sync::LazyLock, time::Duration};
-use ureq::Response;
+use std::io;
 
 use super::AuthState;
+use crate::AGENT;
+use base64::prelude::*;
+use serde::Deserialize;
+use ureq::Response;
 
 #[allow(dead_code)]
 #[derive(Deserialize)]
@@ -15,12 +16,7 @@ struct LoginResponse {
     refresh_token: String,
 }
 
-static AGENT: LazyLock<ureq::Agent> = LazyLock::new(|| {
-    ureq::AgentBuilder::new()
-        .timeout_read(Duration::from_secs(5))
-        .timeout_write(Duration::from_secs(5))
-        .build()
-});
+static OAUTH_SCOPES: &str = "playlist-modify playlist-modify-private playlist-modify-public playlist-read playlist-read-collaborative playlist-read-private streaming user-follow-modify user-follow-read user-library-modify user-library-read user-modify user-modify-playback-state user-modify-private user-personalized user-read-currently-playing user-read-email user-read-play-history user-read-playback-position user-read-playback-state user-read-private user-read-recently-played user-top-read";
 
 pub fn get_tokens(code: String, client_id: &str, secret_id: &str) -> io::Result<AuthState> {
     let secrets_encoded = BASE64_STANDARD.encode(format!("{}:{}", client_id, secret_id));
@@ -33,6 +29,7 @@ pub fn get_tokens(code: String, client_id: &str, secret_id: &str) -> io::Result<
         .send_form(&[
             ("grant_type", "authorization_code"),
             ("code", code.as_str()),
+            ("scope", OAUTH_SCOPES),
             (
                 "redirect_uri",
                 "http://localhost:60069/authorization/callback",
@@ -44,23 +41,20 @@ pub fn get_tokens(code: String, client_id: &str, secret_id: &str) -> io::Result<
 }
 
 pub fn refresh_token(auth_state: &AuthState, client_id: &str) -> io::Result<AuthState> {
-    if let None = auth_state.refresh_token {
-        return Err(io::Error::new(
-            io::ErrorKind::PermissionDenied,
-            "Refresh Token not found",
-        ));
-    }
+    let refresh_token = auth_state.refresh_token.as_ref().ok_or_else(|| {
+        io::Error::new(io::ErrorKind::PermissionDenied, "Refresh Token not found")
+    })?;
 
-    match AGENT
+    let response = AGENT
         .post("https://accounts.spotify.com/api/token")
         .send_form(&[
             ("grant_type", "refresh_token"),
-            ("refresh_token", auth_state.refresh_token.as_ref().unwrap()),
+            ("refresh_token", refresh_token),
             ("client_id", client_id),
-        ]) {
-        Err(err) => Err(io::Error::new(io::ErrorKind::PermissionDenied, err)),
-        Ok(response) => Ok(parse_response(response)?),
-    }
+        ])
+        .map_err(|err| io::Error::new(io::ErrorKind::PermissionDenied, err))?;
+
+    Ok(parse_response(response)?)
 }
 
 fn parse_response(response: Response) -> io::Result<AuthState> {

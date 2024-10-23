@@ -68,21 +68,25 @@ pub fn login(app_tx: Sender<OxifyEvent>) {
 }
 
 fn refresh_task(auth_state: &AuthState, client_id: &str, app_tx: Sender<OxifyEvent>) {
-    if let None = auth_state.expiration_time {
-        log::error!("A valid auth state needs an expiration time");
-        return;
-    }
-    let mut expiration_time = auth_state.expiration_time.unwrap();
+    let mut expiration_time = match auth_state.expiration_time {
+        Some(time) => time,
+        None => {
+            log::error!("A valid auth state needs an expiration time");
+            return;
+        }
+    };
     loop {
         thread::sleep(Duration::from_secs((expiration_time - ONE_MINUTE) as u64));
 
         match refresh_token(auth_state, client_id) {
             Ok(new_state) => {
-                if let None = new_state.expiration_time {
-                    log::error!("A valid auth state needs an expiration time");
-                    return;
-                }
-                expiration_time = new_state.expiration_time.unwrap();
+                expiration_time = match new_state.expiration_time {
+                    Some(time) => time,
+                    None => {
+                        log::error!("A valid auth state needs an expiration time");
+                        return;
+                    }
+                };
                 if let Err(err) = app_tx.send(OxifyEvent::AuthInfo(new_state.clone())) {
                     log::error!(
                         "Error sending login information through the channel: {}",

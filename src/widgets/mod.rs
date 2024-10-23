@@ -1,6 +1,8 @@
+use std::rc::Rc;
+
 use crate::OxifyEvent;
 use crossterm::event::KeyEvent;
-use ratatui::{layout::Rect, widgets::Widget};
+use ratatui::{layout::Rect, widgets::Widget, Frame};
 
 mod player;
 pub use player::Player;
@@ -15,6 +17,7 @@ pub mod login;
 
 pub trait CustomWidget: Widget + Clone {
     fn handle_key_event(&self, key_event: KeyEvent) -> Option<OxifyEvent>;
+    fn layout(&self, frame: &Frame<'_>) -> Rc<[Rect]>;
 }
 
 fn centered_height(element_height: u16, area: &Rect) -> u16 {

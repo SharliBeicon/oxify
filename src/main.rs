@@ -11,7 +11,8 @@ fn main() -> io::Result<()> {
         .create(true)
         .append(true)
         .open(filename)?;
-    WriteLogger::init(LevelFilter::Info, Config::default(), file).unwrap();
+    WriteLogger::init(LevelFilter::Info, Config::default(), file)
+        .expect("Cannot init logging engine");
 
     let mut terminal = ratatui::init();
     terminal.clear()?;
