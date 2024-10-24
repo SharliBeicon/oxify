@@ -1,5 +1,3 @@
-use std::rc::Rc;
-
 use crossterm::event::{KeyCode, KeyEvent};
 use ratatui::{
     buffer::Buffer,
@@ -23,14 +21,8 @@ impl CustomWidget for Player {
             _ => None,
         }
     }
-
-    fn layout(&self, frame: &Frame) -> Rc<[Rect]> {
-        Layout::default()
-            .direction(Direction::Vertical)
-            .constraints(vec![Constraint::Percentage(50), Constraint::Percentage(50)])
-            .split(frame.area())
-    }
 }
+
 impl Widget for Player {
     fn render(self, area: Rect, buf: &mut Buffer) {
         let title = Title::from(" Player ".bold());

@@ -1,5 +1,3 @@
-use std::rc::Rc;
-
 use crossterm::event::{KeyCode, KeyEvent};
 use ratatui::{
     buffer::Buffer,
@@ -11,7 +9,6 @@ use ratatui::{
         block::{Position, Title},
         Block, Padding, Paragraph, Widget,
     },
-    Frame,
 };
 
 use crate::OxifyEvent;
@@ -27,9 +24,6 @@ impl CustomWidget for AwaitLogin {
             KeyCode::Char('q') => Some(OxifyEvent::Exit),
             _ => None,
         }
-    }
-    fn layout(&self, frame: &Frame<'_>) -> Rc<[Rect]> {
-        Rc::new([frame.area()])
     }
 }
 impl Widget for AwaitLogin {

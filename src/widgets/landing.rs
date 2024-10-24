@@ -1,5 +1,3 @@
-use std::rc::Rc;
-
 use super::{centered_height, CustomWidget};
 use crate::OxifyEvent;
 use crossterm::event::{KeyCode, KeyEvent};
@@ -13,7 +11,6 @@ use ratatui::{
         block::{Position, Title},
         Block, Padding, Paragraph, Widget,
     },
-    Frame,
 };
 
 #[derive(Debug, Default, Clone)]
@@ -26,9 +23,6 @@ impl CustomWidget for Landing {
             KeyCode::Char(' ') => Some(OxifyEvent::LoginAttempt),
             _ => None,
         }
-    }
-    fn layout(&self, frame: &Frame<'_>) -> Rc<[Rect]> {
-        Rc::new([frame.area()])
     }
 }
 

@@ -1,6 +1,6 @@
 use crate::{
     auth::{api, AuthState, LoginState},
-    widgets::{login::AwaitLogin, CustomWidget, Landing, Player, Popup},
+    widgets::{login::AwaitLogin, main_window::MainWindow, CustomWidget, Landing, Popup},
     OxifyEvent,
 };
 use crossterm::event::KeyEventKind;
@@ -35,7 +35,11 @@ impl App<'_> {
     pub fn run(&mut self, terminal: &mut DefaultTerminal) -> io::Result<()> {
         let (tx, rx) = channel::<OxifyEvent>();
 
-        terminal.draw(|frame| self.draw(&Landing::default(), frame))?;
+        let landing = Landing::default();
+        let await_login = AwaitLogin::default();
+        let main_window = MainWindow::new();
+
+        terminal.draw(|frame| self.draw(&Landing::default(), frame, None))?;
         while !self.exit {
             if let Ok(received) = rx.try_recv() {
                 log::info!("Oxify event received: {:?}", received);
@@ -52,7 +56,7 @@ impl App<'_> {
                 }
             }
 
-            self.handle_state(tx.clone(), terminal)?;
+            self.handle_state(tx.clone(), terminal, &landing, &await_login, &main_window)?;
         }
 
         Ok(())
@@ -62,30 +66,39 @@ impl App<'_> {
         &mut self,
         tx: Sender<OxifyEvent>,
         terminal: &mut DefaultTerminal,
+        landing: &Landing,
+        await_login: &AwaitLogin,
+        main_window: &MainWindow,
     ) -> io::Result<()> {
         match self.auth_state.login_state {
             LoginState::Out => {
-                let landing = &Landing::default();
-                terminal.draw(|frame| self.draw(landing, frame))?;
+                terminal.draw(|frame| self.draw(landing, frame, None))?;
                 self.handle_events(landing, tx)?;
             }
             LoginState::Loading => {
-                let await_login = &AwaitLogin::default();
-                terminal.draw(|frame| self.draw(await_login, frame))?;
+                terminal.draw(|frame| self.draw(await_login, frame, None))?;
                 self.handle_events(await_login, tx)?;
             }
             LoginState::In => {
-                let player = &Player::default();
-                terminal.draw(|frame| self.draw(player, frame))?;
-                self.handle_events(player, tx.clone())?;
+                terminal.draw(|frame| {
+                    let (left_panel, right_panel) = main_window.layout(frame.area());
+                    self.draw(&main_window.player, frame, Some(left_panel[0]));
+                    self.draw(&main_window.player, frame, Some(right_panel[0]));
+                    self.draw(&main_window.player, frame, Some(right_panel[1]));
+                })?;
+                self.handle_events(&main_window.player, tx)?;
             }
         }
         Ok(())
     }
 
-    fn draw(&self, widget: &impl CustomWidget, frame: &mut Frame) {
-        let popup_area = resize_area(frame.area(), 60, 20);
-        frame.render_widget(widget.clone(), widget.layout(&*frame)[0]);
+    fn draw(&self, widget: &impl CustomWidget, frame: &mut Frame, area: Option<Rect>) {
+        let drawing_area = match area {
+            Some(area) => area,
+            None => frame.area(),
+        };
+        let popup_area = resize_area(drawing_area, 60, 20);
+        frame.render_widget(widget.clone(), drawing_area);
 
         self.active_popup.as_ref().map(|popup| {
             frame.render_widget(popup.clone(), popup_area);
