@@ -1,4 +1,5 @@
 use chrono::{DateTime, Utc};
+use oxify::App;
 use simplelog::*;
 use std::fs::OpenOptions;
 use std::io;
@@ -17,7 +18,7 @@ fn main() -> io::Result<()> {
     let mut terminal = ratatui::init();
     terminal.clear()?;
 
-    let app_result = oxify::App::new().run(&mut terminal);
+    let app_result = App::new().run(&mut terminal);
 
     ratatui::restore();
 

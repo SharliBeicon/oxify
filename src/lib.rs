@@ -3,7 +3,8 @@ use std::{fs, io, path::PathBuf, sync::LazyLock};
 
 pub use app::App;
 pub mod auth;
-pub mod player;
+pub mod model;
+pub mod spotify;
 pub mod widgets;
 use auth::AuthState;
 use std::time::Duration;
@@ -22,6 +23,16 @@ pub enum OxifyEvent {
     LoginAttempt,
     AuthInfo(AuthState),
     Popup(PopupContent),
+    Focus(Focus),
+}
+
+#[derive(Debug, Default)]
+pub enum Focus {
+    Search,
+    Library,
+    Player,
+    #[default]
+    None,
 }
 
 fn get_or_create_oxify_dir() -> io::Result<PathBuf> {

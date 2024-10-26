@@ -82,7 +82,7 @@ impl Widget for Popup<'_> {
 }
 
 impl CustomWidget for Popup<'_> {
-    fn handle_key_event(&self, key_event: KeyEvent) -> Option<OxifyEvent> {
+    fn handle_key_event(&mut self, key_event: KeyEvent) -> Option<OxifyEvent> {
         match key_event.code {
             _ => Some(OxifyEvent::Exit),
         }

@@ -101,10 +101,28 @@ fn refresh_task(auth_state: &AuthState, client_id: &str, app_tx: Sender<OxifyEve
         }
     }
 }
+static OAUTH_SCOPES: &[&str] = &[
+    "user-read-playback-state",
+    "user-modify-playback-state",
+    "user-read-currently-playing",
+    "app-remote-control",
+    "streaming",
+    "playlist-read-private",
+    "playlist-read-collaborative",
+    "playlist-modify-private",
+    "playlist-modify-public",
+    "user-read-playback-position",
+    "user-top-read",
+    "user-read-recently-played",
+    "user-library-modify",
+    "user-library-read",
+    "user-read-email",
+    "user-read-private",
+];
 
 fn auth_query(state: &str, client_id: &str) -> String {
     let response_type = "code";
     let redirect_uri = "http://localhost:60069/authorization/callback";
 
-    format!("https://accounts.spotify.com/authorize?client_id={}&response_type={}&redirect_uri={}&state={}", client_id, response_type, redirect_uri, state )
+    format!("https://accounts.spotify.com/authorize?client_id={}&response_type={}&scope={}&redirect_uri={}&state={}", client_id, response_type, &OAUTH_SCOPES.join("%20"), redirect_uri, state)
 }

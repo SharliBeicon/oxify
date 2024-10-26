@@ -17,7 +17,7 @@ use ratatui::{
 pub struct Landing {}
 
 impl CustomWidget for Landing {
-    fn handle_key_event(&self, key_event: KeyEvent) -> Option<OxifyEvent> {
+    fn handle_key_event(&mut self, key_event: KeyEvent) -> Option<OxifyEvent> {
         match key_event.code {
             KeyCode::Char('q') => Some(OxifyEvent::Exit),
             KeyCode::Char(' ') => Some(OxifyEvent::LoginAttempt),
@@ -51,7 +51,7 @@ Sp[ox]tify",
             " Login ".into(),
             "<space> ".blue().bold(),
             " Quit ".into(),
-            "<Q> ".blue().bold(),
+            "<q> ".blue().bold(),
         ]));
 
         let block = Block::bordered()

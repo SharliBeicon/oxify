@@ -19,7 +19,7 @@ use super::{centered_height, CustomWidget};
 pub struct AwaitLogin;
 
 impl CustomWidget for AwaitLogin {
-    fn handle_key_event(&self, key_event: KeyEvent) -> Option<OxifyEvent> {
+    fn handle_key_event(&mut self, key_event: KeyEvent) -> Option<OxifyEvent> {
         match key_event.code {
             KeyCode::Char('q') => Some(OxifyEvent::Exit),
             _ => None,
