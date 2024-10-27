@@ -6,7 +6,7 @@ use ratatui::{
     style::{Color, Style},
     symbols,
     text::Line,
-    widgets::{block::Title, Block, Borders, Widget},
+    widgets::{block::Title, Block, Borders, Paragraph, Widget},
 };
 
 use crate::{Focus, OxifyEvent};
@@ -16,7 +16,7 @@ use super::{CustomWidget, InputMode};
 #[derive(Debug, Default, Clone)]
 pub struct Search {
     input: String,
-    character_index: usize,
+    pub character_index: usize,
     pub input_mode: InputMode,
 }
 
@@ -81,13 +81,13 @@ impl CustomWidget for Search {
             InputMode::Focus => {
                 match key_event.code {
                     //KeyCode::Enter => self.submit_message(),
-                    KeyCode::Char(to_insert) => self.enter_char(to_insert),
                     KeyCode::Backspace => self.delete_char(),
                     KeyCode::Left => self.move_cursor_left(),
                     KeyCode::Right => self.move_cursor_right(),
                     KeyCode::Esc => {
                         return Some(OxifyEvent::Focus(Focus::None));
                     }
+                    KeyCode::Char(to_insert) => self.enter_char(to_insert),
                     _ => {}
                 }
                 None
@@ -121,9 +121,11 @@ impl Widget for Search {
             style = Style::default().fg(Color::Yellow);
         }
 
-        block
-            .title(title.alignment(Alignment::Right))
+        block = block.title(title.alignment(Alignment::Right)).style(style);
+
+        Paragraph::new(self.input.as_str())
             .style(style)
+            .block(block)
             .render(area, buf);
     }
 }

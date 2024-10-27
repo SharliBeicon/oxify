@@ -51,12 +51,7 @@ impl Widget for Player {
             bottom_left: symbols::line::NORMAL.horizontal_up,
             ..symbols::border::PLAIN
         };
-        let instructions = Title::from(Line::from(vec![
-            " Defocus ".into(),
-            "<ESC> ".blue().bold(),
-            " Quit ".into(),
-            "<q> ".blue().bold(),
-        ]));
+        let instructions = Title::from(Line::from(vec![" Help ".into(), "<?> ".blue().bold()]));
         let title: Title;
         let text_str = format!(
             " Hello, {}! Use the left window o the search bar to start listening music. ",

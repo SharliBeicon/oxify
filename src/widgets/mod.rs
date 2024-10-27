@@ -12,8 +12,7 @@ mod search;
 mod landing;
 pub use landing::Landing;
 
-mod popup;
-pub use popup::{Popup, PopupKind};
+pub mod popup;
 
 pub mod login;
 
@@ -29,7 +28,5 @@ pub trait CustomWidget: Widget + Clone {
 }
 
 fn centered_height(element_height: u16, area: &Rect) -> u16 {
-    ((area.height as i32 / 2) - ((element_height as i32 + 1) / 2))
-        .try_into()
-        .unwrap_or(0)
+    (area.height / 2).saturating_sub((element_height + 1) / 2)
 }

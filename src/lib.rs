@@ -8,7 +8,7 @@ pub mod spotify;
 pub mod widgets;
 use auth::AuthState;
 use std::time::Duration;
-use widgets::PopupKind;
+use widgets::popup::PopupKind;
 
 #[derive(Debug)]
 pub struct PopupContent {
@@ -26,7 +26,7 @@ pub enum OxifyEvent {
     Focus(Focus),
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, PartialEq, Eq)]
 pub enum Focus {
     Search,
     Library,

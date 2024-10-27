@@ -41,21 +41,21 @@ struct PopupStyle {
 impl From<&PopupKind> for PopupStyle {
     fn from(value: &PopupKind) -> Self {
         match value {
-            PopupKind::Info => PopupStyle {
+            _ => PopupStyle {
                 title_style: Style::new().black(),
                 border_style: Style::new().black(),
                 style: Style::new().on_light_blue().black(),
             },
-            PopupKind::Error => PopupStyle {
-                title_style: todo!(),
-                border_style: todo!(),
-                style: todo!(),
-            },
-            PopupKind::Warning => PopupStyle {
-                title_style: todo!(),
-                border_style: todo!(),
-                style: todo!(),
-            },
+            //PopupKind::Error => PopupStyle {
+            //    title_style: todo!(),
+            //    border_style: todo!(),
+            //    style: todo!(),
+            //},
+            //PopupKind::Warning => PopupStyle {
+            //    title_style: todo!(),
+            //    border_style: todo!(),
+            //    style: todo!(),
+            //},
         }
     }
 }
@@ -64,7 +64,7 @@ impl Widget for Popup<'_> {
     fn render(self, area: Rect, buf: &mut Buffer) {
         Clear.render(area, buf);
         let block = Block::new()
-            .title(self.title)
+            .title(self.title.alignment(Alignment::Center))
             .title(
                 Title::from(" Press any key to close ")
                     .alignment(Alignment::Center)
@@ -73,8 +73,9 @@ impl Widget for Popup<'_> {
             .title_style(PopupStyle::from(&self.kind).title_style)
             .borders(Borders::ALL)
             .border_style(PopupStyle::from(&self.kind).border_style);
-        Paragraph::new(self.content)
+        Paragraph::new(self.content.centered())
             .wrap(Wrap { trim: true })
+            .centered()
             .style(PopupStyle::from(&self.kind).style)
             .block(block)
             .render(area, buf);
@@ -86,5 +87,28 @@ impl CustomWidget for Popup<'_> {
         match key_event.code {
             _ => Some(OxifyEvent::Exit),
         }
+    }
+}
+
+pub fn help_popup() -> Popup<'static> {
+    let content = Text::from(vec![
+        Line::from(vec![
+            "<space> ".dark_gray().bold(),
+            "Play/Pause Music".into(),
+        ]),
+        Line::from(vec![
+            "<1/2/3> ".dark_gray().bold(),
+            "Toggle panel focus".into(),
+        ]),
+        Line::from(vec!["<ESC> ".dark_gray().bold(), "Defocus panel".into()]),
+        Line::from(vec!["<↑ /k> ".dark_gray().bold(), "Move up".into()]),
+        Line::from(vec!["<↓ /j> ".dark_gray().bold(), "Move down".into()]),
+        Line::from(vec!["<q> ".dark_gray().bold(), "Exit app".into()]),
+    ]);
+
+    Popup {
+        title: " Help ".into(),
+        content,
+        kind: PopupKind::Info,
     }
 }

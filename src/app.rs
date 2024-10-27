@@ -2,12 +2,17 @@ use crate::{
     auth::{self, AuthState, LoginState},
     model::user_profile::UserProfile,
     spotify,
-    widgets::{login::AwaitLogin, main_window::MainWindow, CustomWidget, Landing, Popup},
+    widgets::{
+        login::AwaitLogin,
+        main_window::MainWindow,
+        popup::{help_popup, Popup},
+        CustomWidget, Landing,
+    },
     Focus, OxifyEvent,
 };
-use crossterm::event::{Event, KeyEventKind};
+use crossterm::event::{Event, KeyCode, KeyEventKind};
 use ratatui::{
-    layout::{Constraint, Flex, Layout, Rect},
+    layout::{Constraint, Flex, Layout, Position, Rect},
     style::Stylize,
     text::{Line, Text},
     DefaultTerminal, Frame,
@@ -121,8 +126,12 @@ impl App<'_> {
                 }
                 terminal.draw(|frame| {
                     let (library_panel, main_panel) = main_window.layout(frame.area());
-                    self.draw(&main_window.library, frame, Some(library_panel));
+                    if self.focus == Focus::Search {
+                        self.draw_input(main_window, frame, main_panel[0]);
+                    }
                     self.draw(&main_window.search, frame, Some(main_panel[0]));
+
+                    self.draw(&main_window.library, frame, Some(library_panel));
                     self.draw(&main_window.player, frame, Some(main_panel[1]));
                 })?;
                 main_window.set_focus(&self.focus);
@@ -142,17 +151,37 @@ impl App<'_> {
                         self.handle_events(&mut main_window.search, &event, tx.clone())?;
                     }
                 }
+                if let Some(event) = &event {
+                    if let crossterm::event::Event::Key(key_event) = event {
+                        if key_event.kind == KeyEventKind::Press
+                            && key_event.code == KeyCode::Char('?')
+                        {
+                            self.active_popup = Some(help_popup());
+                        }
+                    }
+                }
             }
         }
         Ok(())
     }
 
+    fn draw_input(&self, widget: &mut MainWindow, frame: &mut Frame, area: Rect) {
+        #[allow(clippy::cast_possible_truncation)]
+        frame.set_cursor_position(Position::new(
+            area.x + widget.search.character_index as u16 + 1,
+            area.y + 1,
+        ));
+    }
     fn draw(&self, widget: &impl CustomWidget, frame: &mut Frame, area: Option<Rect>) {
         let drawing_area = match area {
             Some(area) => area,
             None => frame.area(),
         };
-        let popup_area = resize_area(drawing_area, 60, 20);
+        let popup_area = match frame.area().height {
+            0..20 => resize_area(frame.area(), 50, 46),
+            20..30 => resize_area(frame.area(), 40, 37),
+            30.. => resize_area(frame.area(), 30, 28),
+        };
         frame.render_widget(widget.clone(), drawing_area);
 
         self.active_popup.as_ref().map(|popup| {
