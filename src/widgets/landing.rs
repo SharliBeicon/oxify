@@ -1,6 +1,6 @@
-use super::{centered_height, CustomWidget};
-use crate::OxifyEvent;
-use crossterm::event::{KeyCode, KeyEvent};
+use std::sync::mpsc::Sender;
+
+use crossterm::event::{Event, KeyCode, KeyEventKind};
 use ratatui::{
     buffer::Buffer,
     layout::{Alignment, Rect},
@@ -11,17 +11,52 @@ use ratatui::{
         block::{Position, Title},
         Block, Padding, Paragraph, Widget,
     },
+    Frame,
 };
 
-#[derive(Debug, Default, Clone)]
-pub struct Landing {}
+use crate::{auth, OxifyEvent};
 
-impl CustomWidget for Landing {
-    fn handle_key_event(&mut self, key_event: KeyEvent) -> Option<OxifyEvent> {
-        match key_event.code {
-            KeyCode::Char('q') => Some(OxifyEvent::Exit),
-            KeyCode::Char(' ') => Some(OxifyEvent::LoginAttempt),
-            _ => None,
+use super::centered_height;
+
+#[derive(Debug, Default, Clone)]
+pub struct Landing {
+    pub auth_tx: Option<Sender<auth::AuthState>>,
+    pub event_tx: Option<Sender<OxifyEvent>>,
+}
+
+impl Landing {
+    pub fn draw(&self, frame: &mut Frame) {
+        frame.render_widget(self.clone(), frame.area());
+    }
+
+    pub fn handle_events(&self, terminal_event: &Option<Event>) {
+        if let Some(terminal_event) = terminal_event {
+            if let crossterm::event::Event::Key(key_event) = terminal_event {
+                if key_event.kind == KeyEventKind::Press {
+                    let event_tx = self
+                        .event_tx
+                        .clone()
+                        .expect("Event sender not initialized somehow");
+                    match key_event.code {
+                        KeyCode::Char(' ') => {
+                            let auth_tx = self
+                                .auth_tx
+                                .clone()
+                                .expect("Event sender not initialized somehow");
+                            if let Err(err) = event_tx.send(OxifyEvent::LoginAttempt) {
+                                log::error!("Cannot send event to main app: {err}")
+                            }
+                            std::thread::spawn(|| auth::api::login(auth_tx));
+                        }
+                        KeyCode::Char('q') => {
+                            if let Err(err) = event_tx.send(OxifyEvent::Exit) {
+                                log::error!("Cannot send event to main app: {err}")
+                            }
+                        }
+                        _ => (),
+                    }
+                }
+            }
         }
     }
 }

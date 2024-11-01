@@ -1,5 +1,6 @@
-use crate::{Focus, OxifyEvent};
-use crossterm::event::{KeyCode, KeyEvent};
+use std::sync::mpsc::Sender;
+
+use crossterm::event::KeyCode;
 use ratatui::{
     buffer::Buffer,
     layout::Rect,
@@ -10,34 +11,39 @@ use ratatui::{
     },
 };
 
-use super::{centered_height, CustomWidget, InputMode};
+use crate::{Focus, OxifyEvent};
+
+use super::centered_height;
 
 #[derive(Debug, Default, Clone)]
 pub struct Player {
     pub username: String,
-    pub input_mode: InputMode,
+    pub focused: bool,
+
+    pub event_tx: Option<Sender<OxifyEvent>>,
 }
 
-impl CustomWidget for Player {
-    fn handle_key_event(&mut self, key_event: KeyEvent) -> Option<OxifyEvent> {
-        match self.input_mode {
-            InputMode::Normal => match key_event.code {
-                KeyCode::Char('q') => Some(OxifyEvent::Exit),
+impl Player {
+    pub fn draw(&self, frame: &mut Frame) {
+        frame.render_widget(self.clone(), frame.area());
+    }
+    pub fn handle_events(&self, key_code: &KeyCode) {
+        let event_tx = self
+            .event_tx
+            .clone()
+            .expect("Event sender not initialized somehow");
+        if self.focused {
+            match key_code {
+                _ => (),
+            }
+        } else {
+            match key_code {
                 KeyCode::Char('3') => {
-                    self.input_mode = InputMode::Focus;
-                    Some(OxifyEvent::Focus(Focus::Player))
-                }
-                _ => None,
-            },
-            InputMode::Focus => {
-                match key_event.code {
-                    //KeyCode::Enter => self.submit_message(),
-                    KeyCode::Esc => {
-                        return Some(OxifyEvent::Focus(Focus::None));
+                    if let Err(err) = event_tx.send(OxifyEvent::Focus(Focus::Player)) {
+                        log::error!("Cannot send event to main app: {err}")
                     }
-                    _ => {}
                 }
-                None
+                _ => (),
             }
         }
     }
@@ -69,21 +75,18 @@ impl Widget for Player {
                 &area,
             )));
 
-        match self.input_mode {
-            InputMode::Normal => {
-                title = Title::from(Line::from(vec![" [3] ".blue().bold(), "Player ".bold()]));
-                block = block
-                    .style(Style::default())
-                    .border_set(player_border_set)
-                    .borders(Borders::ALL);
-            }
-            InputMode::Focus => {
-                title = Title::from(Line::from(vec![
-                    " [3] ".light_red().bold(),
-                    "Player ".bold(),
-                ]));
-                block = block.style(Style::default().fg(Color::Yellow));
-            }
+        if !self.focused {
+            title = Title::from(Line::from(vec![" [3] ".blue().bold(), "Player ".bold()]));
+            block = block
+                .style(Style::default())
+                .border_set(player_border_set)
+                .borders(Borders::ALL);
+        } else {
+            title = Title::from(Line::from(vec![
+                " [3] ".light_red().bold(),
+                "Player ".bold(),
+            ]));
+            block = block.style(Style::default().fg(Color::Yellow));
         }
 
         block = block.title(title);

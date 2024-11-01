@@ -1,32 +1,44 @@
-mod app;
-use std::{fs, io, path::PathBuf, sync::LazyLock};
+use std::{
+    sync::{mpsc::Sender, LazyLock},
+    time::Duration,
+};
 
-pub use app::App;
+use ratatui::layout::{Constraint, Flex, Layout, Rect};
+use widgets::{popup::Popup, InputMode};
+
+pub mod app;
 pub mod auth;
 pub mod model;
 pub mod spotify;
 pub mod widgets;
-use auth::AuthState;
-use std::time::Duration;
-use widgets::popup::PopupKind;
 
-#[derive(Debug)]
-pub struct PopupContent {
-    title: String,
-    content: String,
-    kind: PopupKind,
-}
+pub static AGENT: LazyLock<ureq::Agent> = LazyLock::new(|| {
+    ureq::AgentBuilder::new()
+        .timeout_read(Duration::from_secs(5))
+        .timeout_write(Duration::from_secs(5))
+        .build()
+});
 
 #[derive(Debug)]
 pub enum OxifyEvent {
     Exit,
-    LoginAttempt,
-    AuthInfo(AuthState),
-    Popup(PopupContent),
     Focus(Focus),
+    LoginAttempt,
+    SearchRequest(String),
+    InputMode(InputMode),
+    Popup(Popup<'static>),
+    ClosePopup,
 }
 
-#[derive(Debug, Default, PartialEq, Eq)]
+impl OxifyEvent {
+    pub fn send(tx: &Sender<Self>, event: Self) {
+        if let Err(err) = tx.send(event) {
+            log::error!("Cannot send event to main app: {err}")
+        }
+    }
+}
+
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub enum Focus {
     Search,
     Library,
@@ -35,20 +47,10 @@ pub enum Focus {
     None,
 }
 
-fn get_or_create_oxify_dir() -> io::Result<PathBuf> {
-    let current_dir = std::env::current_dir().expect("Can't get the current directory");
-    let oxify_dir = current_dir.join("oxify");
-
-    if !oxify_dir.exists() {
-        fs::create_dir(&oxify_dir)?;
-    }
-
-    Ok(oxify_dir)
+pub fn resize_area(area: Rect, percent_x: u16, percent_y: u16) -> Rect {
+    let vertical = Layout::vertical([Constraint::Percentage(percent_y)]).flex(Flex::Center);
+    let horizontal = Layout::horizontal([Constraint::Percentage(percent_x)]).flex(Flex::Center);
+    let [area] = vertical.areas(area);
+    let [area] = horizontal.areas(area);
+    area
 }
-
-pub static AGENT: LazyLock<ureq::Agent> = LazyLock::new(|| {
-    ureq::AgentBuilder::new()
-        .timeout_read(Duration::from_secs(5))
-        .timeout_write(Duration::from_secs(5))
-        .build()
-});

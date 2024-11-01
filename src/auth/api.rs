@@ -9,12 +9,12 @@ use super::{
     config::Config,
     server, HttpMessage,
 };
-use crate::{auth::AuthState, OxifyEvent};
+use crate::auth::AuthState;
 use rand::distributions::{Alphanumeric, DistString};
 
 const ONE_MINUTE: i32 = 60;
 
-pub fn login(app_tx: Sender<OxifyEvent>) {
+pub fn login(app_tx: Sender<AuthState>) {
     let config = Config::new();
 
     let (tx, rx) = channel::<HttpMessage>();
@@ -35,7 +35,7 @@ pub fn login(app_tx: Sender<OxifyEvent>) {
             HttpMessage::AuthCode(code) => {
                 match client::get_tokens(code, config.client_id, config.secret_id) {
                     Err(err) => {
-                        if let Err(err) = app_tx.send(OxifyEvent::AuthInfo(AuthState::default())) {
+                        if let Err(err) = app_tx.send(AuthState::default()) {
                             log::error!(
                                 "Error sending login information through the channel: {}",
                                 err
@@ -44,7 +44,7 @@ pub fn login(app_tx: Sender<OxifyEvent>) {
                         log::error!("Could not complete login process: {}", err)
                     }
                     Ok(auth_state) => {
-                        if let Err(err) = app_tx.send(OxifyEvent::AuthInfo(auth_state.clone())) {
+                        if let Err(err) = app_tx.send(auth_state.clone()) {
                             log::error!(
                                 "Error sending login information through the channel: {}",
                                 err
@@ -67,7 +67,7 @@ pub fn login(app_tx: Sender<OxifyEvent>) {
     }
 }
 
-fn refresh_task(auth_state: &AuthState, client_id: &str, app_tx: Sender<OxifyEvent>) {
+fn refresh_task(auth_state: &AuthState, client_id: &str, app_tx: Sender<AuthState>) {
     let mut expiration_time = match auth_state.expiration_time {
         Some(time) => time,
         None => {
@@ -87,7 +87,7 @@ fn refresh_task(auth_state: &AuthState, client_id: &str, app_tx: Sender<OxifyEve
                         return;
                     }
                 };
-                if let Err(err) = app_tx.send(OxifyEvent::AuthInfo(new_state.clone())) {
+                if let Err(err) = app_tx.send(new_state.clone()) {
                     log::error!(
                         "Error sending login information through the channel: {}",
                         err

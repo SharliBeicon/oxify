@@ -1,5 +1,5 @@
 use chrono::{DateTime, Utc};
-use oxify::App;
+use oxify::app::App;
 use simplelog::*;
 use std::fs::OpenOptions;
 use std::io;

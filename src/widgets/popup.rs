@@ -1,4 +1,6 @@
-use crossterm::event::KeyEvent;
+use std::sync::mpsc::Sender;
+
+use crossterm::event::{Event, KeyCode, KeyEvent, KeyEventKind};
 use derive_setters::Setters;
 use ratatui::{
     buffer::Buffer,
@@ -9,11 +11,10 @@ use ratatui::{
         block::{Position, Title},
         Block, Borders, Clear, Paragraph, Widget, Wrap,
     },
+    Frame,
 };
 
-use crate::OxifyEvent;
-
-use super::CustomWidget;
+use crate::{resize_area, OxifyEvent};
 
 #[derive(Debug, Default, Clone)]
 pub enum PopupKind {
@@ -60,6 +61,39 @@ impl From<&PopupKind> for PopupStyle {
     }
 }
 
+impl Popup<'_> {
+    pub fn draw(&self, frame: &mut Frame) {
+        let popup_area = match frame.area().height {
+            0..20 => resize_area(frame.area(), 50, 46),
+            20..30 => resize_area(frame.area(), 40, 37),
+            30.. => resize_area(frame.area(), 30, 28),
+        };
+
+        frame.render_widget(self.clone(), popup_area);
+    }
+
+    pub fn handle_events(&self, event_tx: &Sender<OxifyEvent>, terminal_event: &Option<Event>) {
+        if let Some(terminal_event) = terminal_event {
+            if let crossterm::event::Event::Key(key_event) = terminal_event {
+                if key_event.kind == KeyEventKind::Press {
+                    OxifyEvent::send(event_tx, OxifyEvent::ClosePopup);
+                }
+            }
+        }
+    }
+    pub fn handle_toggle_popup(event_tx: &Sender<OxifyEvent>, terminal_event: &Option<Event>) {
+        if let Some(terminal_event) = terminal_event {
+            if let crossterm::event::Event::Key(key_event) = terminal_event {
+                if key_event.kind == KeyEventKind::Press {
+                    if key_event.code == KeyCode::Char('?') {
+                        OxifyEvent::send(event_tx, OxifyEvent::Popup(help_popup()));
+                    }
+                }
+            }
+        }
+    }
+}
+
 impl Widget for Popup<'_> {
     fn render(self, area: Rect, buf: &mut Buffer) {
         Clear.render(area, buf);
@@ -82,27 +116,22 @@ impl Widget for Popup<'_> {
     }
 }
 
-impl CustomWidget for Popup<'_> {
-    fn handle_key_event(&mut self, key_event: KeyEvent) -> Option<OxifyEvent> {
-        match key_event.code {
-            _ => Some(OxifyEvent::Exit),
-        }
-    }
-}
-
 pub fn help_popup() -> Popup<'static> {
     let content = Text::from(vec![
         Line::from(vec![
             "<space> ".dark_gray().bold(),
             "Play/Pause Music".into(),
         ]),
+        Line::from(vec!["<1/2/3> ".dark_gray().bold(), "Select panel".into()]),
         Line::from(vec![
-            "<1/2/3> ".dark_gray().bold(),
-            "Toggle panel focus".into(),
+            "<ESC> ".dark_gray().bold(),
+            "Exit focus/insert mode".into(),
         ]),
-        Line::from(vec!["<ESC> ".dark_gray().bold(), "Defocus panel".into()]),
         Line::from(vec!["<↑ /k> ".dark_gray().bold(), "Move up".into()]),
         Line::from(vec!["<↓ /j> ".dark_gray().bold(), "Move down".into()]),
+        Line::from(vec!["<← /h> ".dark_gray().bold(), "Move left".into()]),
+        Line::from(vec!["<→ /l> ".dark_gray().bold(), "Move right".into()]),
+        Line::from(vec!["<i> ".dark_gray().bold(), "Insert mode".into()]),
         Line::from(vec!["<q> ".dark_gray().bold(), "Exit app".into()]),
     ]);
 

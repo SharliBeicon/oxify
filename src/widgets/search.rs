@@ -1,4 +1,6 @@
-use crossterm::event::{KeyCode, KeyEvent};
+use std::sync::mpsc::Sender;
+
+use crossterm::event::KeyCode;
 use ratatui::{
     buffer::Buffer,
     layout::{Alignment, Rect},
@@ -7,17 +9,20 @@ use ratatui::{
     symbols,
     text::Line,
     widgets::{block::Title, Block, Borders, Paragraph, Widget},
+    Frame,
 };
 
 use crate::{Focus, OxifyEvent};
 
-use super::{CustomWidget, InputMode};
+use super::InputMode;
 
 #[derive(Debug, Default, Clone)]
 pub struct Search {
     input: String,
     pub character_index: usize,
+    pub focused: bool,
     pub input_mode: InputMode,
+    pub event_tx: Option<Sender<OxifyEvent>>,
 }
 
 impl Search {
@@ -65,32 +70,46 @@ impl Search {
     fn reset_cursor(&mut self) {
         self.character_index = 0;
     }
-}
 
-impl CustomWidget for Search {
-    fn handle_key_event(&mut self, key_event: KeyEvent) -> Option<OxifyEvent> {
-        match self.input_mode {
-            InputMode::Normal => match key_event.code {
-                KeyCode::Char('q') => Some(OxifyEvent::Exit),
-                KeyCode::Char('1') => {
-                    self.input_mode = InputMode::Focus;
-                    Some(OxifyEvent::Focus(Focus::Search))
-                }
-                _ => None,
-            },
-            InputMode::Focus => {
-                match key_event.code {
-                    //KeyCode::Enter => self.submit_message(),
-                    KeyCode::Backspace => self.delete_char(),
-                    KeyCode::Left => self.move_cursor_left(),
-                    KeyCode::Right => self.move_cursor_right(),
-                    KeyCode::Esc => {
-                        return Some(OxifyEvent::Focus(Focus::None));
+    fn submit_message(&mut self) -> OxifyEvent {
+        OxifyEvent::SearchRequest(self.input.clone())
+    }
+
+    pub fn draw(&self, frame: &mut Frame) {
+        frame.render_widget(self.clone(), frame.area());
+    }
+
+    pub fn handle_events(&mut self, key_code: &KeyCode) {
+        let event_tx = self
+            .event_tx
+            .clone()
+            .expect("Event sender not initialized somehow");
+        if self.focused {
+            if self.input_mode == InputMode::Normal {
+                match key_code {
+                    KeyCode::Left | KeyCode::Char('h') => self.move_cursor_left(),
+                    KeyCode::Right | KeyCode::Char('l') => self.move_cursor_right(),
+                    KeyCode::Backspace => self.move_cursor_left(),
+                    KeyCode::Char('i') => {
+                        OxifyEvent::send(&event_tx, OxifyEvent::InputMode(InputMode::Insert))
                     }
-                    KeyCode::Char(to_insert) => self.enter_char(to_insert),
                     _ => {}
                 }
-                None
+            } else {
+                match key_code {
+                    KeyCode::Esc => {
+                        OxifyEvent::send(&event_tx, OxifyEvent::InputMode(InputMode::Normal))
+                    }
+                    KeyCode::Enter => OxifyEvent::send(&event_tx, self.submit_message()),
+                    KeyCode::Backspace => self.delete_char(),
+                    KeyCode::Char(to_insert) => self.enter_char(*to_insert),
+                    _ => (),
+                }
+            }
+        } else {
+            match key_code {
+                KeyCode::Char('1') => OxifyEvent::send(&event_tx, OxifyEvent::Focus(Focus::Search)),
+                _ => (),
             }
         }
     }
@@ -107,7 +126,12 @@ impl Widget for Search {
         let title: Title;
         let mut block = Block::bordered();
 
-        if self.input_mode == InputMode::Normal {
+        let mode = if self.input_mode == InputMode::Normal {
+            " [N]".bold().blue()
+        } else {
+            " [I]".bold().green()
+        };
+        if !self.focused {
             title = Title::from(Line::from(vec![" [1] ".blue().bold(), "Search ".bold()]));
             style = Style::default();
             block = block
@@ -115,6 +139,7 @@ impl Widget for Search {
                 .borders(Borders::TOP | Borders::LEFT | Borders::RIGHT);
         } else {
             title = Title::from(Line::from(vec![
+                mode,
                 " [1] ".light_red().bold(),
                 "Search ".bold(),
             ]));

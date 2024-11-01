@@ -1,4 +1,6 @@
-use crossterm::event::{KeyCode, KeyEvent};
+use std::sync::mpsc::Sender;
+
+use crossterm::event::KeyCode;
 use ratatui::{
     buffer::Buffer,
     layout::{Alignment, Rect},
@@ -6,37 +8,38 @@ use ratatui::{
     style::{Color, Style},
     text::Line,
     widgets::{block::Title, Block, Borders, Widget},
+    Frame,
 };
 
 use crate::{Focus, OxifyEvent};
 
-use super::{CustomWidget, InputMode};
-
 #[derive(Debug, Default, Clone)]
 pub struct Library {
-    pub input_mode: InputMode,
+    pub focused: bool,
+    pub event_tx: Option<Sender<OxifyEvent>>,
 }
 
-impl CustomWidget for Library {
-    fn handle_key_event(&mut self, key_event: KeyEvent) -> Option<OxifyEvent> {
-        match self.input_mode {
-            InputMode::Normal => match key_event.code {
-                KeyCode::Char('q') => Some(OxifyEvent::Exit),
+impl Library {
+    pub fn draw(&self, frame: &mut Frame) {
+        frame.render_widget(self.clone(), frame.area());
+    }
+    pub fn handle_events(&self, key_code: &KeyCode) {
+        let event_tx = self
+            .event_tx
+            .clone()
+            .expect("Event sender not initialized somehow");
+        if self.focused {
+            match key_code {
+                _ => (),
+            }
+        } else {
+            match key_code {
                 KeyCode::Char('2') => {
-                    self.input_mode = InputMode::Focus;
-                    Some(OxifyEvent::Focus(Focus::Library))
-                }
-                _ => None,
-            },
-            InputMode::Focus => {
-                match key_event.code {
-                    //KeyCode::Enter => self.submit_message(),
-                    KeyCode::Esc => {
-                        return Some(OxifyEvent::Focus(Focus::None));
+                    if let Err(err) = event_tx.send(OxifyEvent::Focus(Focus::Library)) {
+                        log::error!("Cannot send event to main app: {err}")
                     }
-                    _ => {}
                 }
-                None
+                _ => (),
             }
         }
     }
@@ -48,7 +51,7 @@ impl Widget for Library {
         let title: Title;
         let mut block = Block::bordered();
 
-        if self.input_mode == InputMode::Normal {
+        if !self.focused {
             title = Title::from(Line::from(vec![" [2] ".blue().bold(), "Library ".bold()]));
             style = Style::default();
             block = block.borders(Borders::TOP | Borders::LEFT | Borders::BOTTOM);

@@ -1,4 +1,6 @@
-use crossterm::event::{KeyCode, KeyEvent};
+use std::sync::mpsc::Sender;
+
+use crossterm::event::{Event, KeyCode, KeyEventKind};
 use ratatui::{
     buffer::Buffer,
     layout::{Alignment, Rect},
@@ -9,23 +11,39 @@ use ratatui::{
         block::{Position, Title},
         Block, Padding, Paragraph, Widget,
     },
+    Frame,
 };
 
 use crate::OxifyEvent;
 
-use super::{centered_height, CustomWidget};
-
+use super::centered_height;
 #[derive(Debug, Default, Clone)]
-pub struct AwaitLogin;
+pub struct AwaitLogin {
+    pub event_tx: Option<Sender<OxifyEvent>>,
+}
 
-impl CustomWidget for AwaitLogin {
-    fn handle_key_event(&mut self, key_event: KeyEvent) -> Option<OxifyEvent> {
-        match key_event.code {
-            KeyCode::Char('q') => Some(OxifyEvent::Exit),
-            _ => None,
+impl AwaitLogin {
+    pub fn draw(&self, frame: &mut Frame) {
+        frame.render_widget(self.clone(), frame.area());
+    }
+
+    pub fn handle_events(&self, terminal_event: &Option<Event>) {
+        let event_tx = self
+            .event_tx
+            .clone()
+            .expect("Event sender not initialized somehow");
+        if let Some(terminal_event) = terminal_event {
+            if let crossterm::event::Event::Key(key_event) = terminal_event {
+                if key_event.kind == KeyEventKind::Press && key_event.code == KeyCode::Char('q') {
+                    if let Err(err) = event_tx.send(OxifyEvent::Exit) {
+                        log::error!("Cannot send event to main app: {err}")
+                    }
+                }
+            }
         }
     }
 }
+
 impl Widget for AwaitLogin {
     fn render(self, area: Rect, buf: &mut Buffer) {
         let content = Text::from(" Please, follow the instructions on the browser. ".bold());
