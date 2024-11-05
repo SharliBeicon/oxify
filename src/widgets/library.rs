@@ -20,8 +20,8 @@ pub struct Library {
 }
 
 impl Library {
-    pub fn draw(&self, frame: &mut Frame) {
-        frame.render_widget(self.clone(), frame.area());
+    pub fn draw(&self, frame: &mut Frame, area: Rect) {
+        frame.render_widget(self.clone(), area);
     }
     pub fn handle_events(&self, key_code: &KeyCode) {
         let event_tx = self

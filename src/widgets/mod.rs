@@ -6,6 +6,7 @@ pub mod main_window;
 pub mod player;
 pub mod popup;
 pub mod search;
+pub mod tables;
 
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
 pub enum InputMode {

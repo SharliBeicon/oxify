@@ -67,7 +67,8 @@ impl Search {
         }
     }
 
-    fn reset_cursor(&mut self) {
+    pub fn reset_cursor(&mut self) {
+        self.input.clear();
         self.character_index = 0;
     }
 
@@ -75,8 +76,8 @@ impl Search {
         OxifyEvent::SearchRequest(self.input.clone())
     }
 
-    pub fn draw(&self, frame: &mut Frame) {
-        frame.render_widget(self.clone(), frame.area());
+    pub fn draw(&self, frame: &mut Frame, area: Rect) {
+        frame.render_widget(self.clone(), area);
     }
 
     pub fn handle_events(&mut self, key_code: &KeyCode) {

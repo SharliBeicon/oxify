@@ -15,7 +15,7 @@ struct LoginResponse {
     expires_in: i32,
     refresh_token: String,
 }
-static OAUTH_SCOPES: &str = "playlist-modify playlist-modify-private playlist-modify-public playlist-read playlist-read-collaborative playlist-read-private streaming user-follow-modify user-follow-read user-library-modify user-library-read user-modify user-modify-playback-state user-modify-private user-personalized user-read-currently-playing user-read-email user-read-play-history user-read-playback-position user-read-playback-state user-read-private user-read-recently-played user-top-read";
+
 pub fn get_tokens(code: String, client_id: &str, secret_id: &str) -> io::Result<AuthState> {
     let secrets_encoded = BASE64_STANDARD.encode(format!("{}:{}", client_id, secret_id));
     match AGENT
@@ -27,7 +27,6 @@ pub fn get_tokens(code: String, client_id: &str, secret_id: &str) -> io::Result<
         .send_form(&[
             ("grant_type", "authorization_code"),
             ("code", code.as_str()),
-            ("scope", OAUTH_SCOPES),
             (
                 "redirect_uri",
                 "http://localhost:60069/authorization/callback",

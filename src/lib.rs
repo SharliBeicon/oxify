@@ -3,6 +3,7 @@ use std::{
     time::Duration,
 };
 
+use model::track_data::SearchData;
 use ratatui::layout::{Constraint, Flex, Layout, Rect};
 use widgets::{popup::Popup, InputMode};
 
@@ -25,6 +26,7 @@ pub enum OxifyEvent {
     Focus(Focus),
     LoginAttempt,
     SearchRequest(String),
+    SearchResponse(SearchData),
     InputMode(InputMode),
     Popup(Popup<'static>),
     ClosePopup,

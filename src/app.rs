@@ -60,19 +60,25 @@ impl App<'_> {
             let oxify_event: Option<OxifyEvent> = event_rx.try_recv().ok();
 
             // Common oxify events
-            oxify_event.as_ref().map(|e| {
-                if let OxifyEvent::Exit = e {
-                    self.exit = true
+            oxify_event.as_ref().map(|oxify_event| match oxify_event {
+                OxifyEvent::Exit => self.exit = true,
+                OxifyEvent::LoginAttempt => self.auth_state.login_state = LoginState::Loading,
+                OxifyEvent::ClosePopup => self.active_popup = None,
+                OxifyEvent::Popup(popup) => self.active_popup = Some(popup.clone()),
+                OxifyEvent::SearchRequest(query) => {
+                    let token = self
+                        .auth_state
+                        .access_token
+                        .as_ref()
+                        .expect("Token not found somehow");
+                    match spotify::api::search(token.to_string(), query.to_string()) {
+                        Ok(response) => {
+                            OxifyEvent::send(&event_tx, OxifyEvent::SearchResponse(response))
+                        }
+                        _ => todo!(),
+                    }
                 }
-                if let OxifyEvent::LoginAttempt = e {
-                    self.auth_state.login_state = LoginState::Loading
-                }
-                if let OxifyEvent::ClosePopup = e {
-                    self.active_popup = None
-                }
-                if let OxifyEvent::Popup(popup) = e {
-                    self.active_popup = Some(popup.clone())
-                }
+                _ => (),
             });
 
             // Handle events depending of the auth state

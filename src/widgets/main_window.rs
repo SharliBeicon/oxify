@@ -6,9 +6,18 @@ use ratatui::{
     Frame,
 };
 
-use crate::{model::user_profile::UserProfile, Focus, OxifyEvent};
+use crate::{
+    model::{track_data::TrackCollection, user_profile::UserProfile},
+    Focus, OxifyEvent,
+};
 
-use super::{library::Library, player::Player, search::Search, InputMode};
+use super::{
+    library::Library,
+    player::{Player, SearchFullData},
+    search::Search,
+    tables::{AlbumTable, TrackTable},
+    InputMode,
+};
 
 #[derive(Default, Debug)]
 pub struct MainWindow {
@@ -45,7 +54,14 @@ impl MainWindow {
             match oxify_event {
                 OxifyEvent::Focus(focus) => self.set_focus(focus),
                 OxifyEvent::InputMode(input_mode) => self.search.input_mode = *input_mode,
-                OxifyEvent::SearchRequest(query) => todo!(), // Send API request, result of the request must be passed to another channel
+                OxifyEvent::SearchResponse(response) => {
+                    self.player.search_data = Some(SearchFullData {
+                        data: response.clone(),
+                        track_table: TrackTable::new(response.clone().tracks.unwrap()),
+                        album_table: AlbumTable::new(response.clone().albums.unwrap()),
+                    });
+                    self.search.reset_cursor();
+                }
                 _ => (),
             }
         }
@@ -92,14 +108,12 @@ impl MainWindow {
 
         let (library_area, search_and_player_area) = layout(frame.area());
 
-        frame.render_widget(self.library.clone(), library_area);
-
-        if self.search.focused {
-            self.draw_input(frame, search_and_player_area[0]);
-        }
-        frame.render_widget(self.search.clone(), search_and_player_area[0]);
-
-        frame.render_widget(self.player.clone(), search_and_player_area[1]);
+        self.library.draw(frame, library_area);
+        self.search
+            .focused
+            .then(|| self.draw_input(frame, search_and_player_area[0]));
+        self.search.draw(frame, search_and_player_area[0]);
+        self.player.draw(frame, search_and_player_area[1]);
     }
 
     fn set_focus(&mut self, focus_event: &Focus) {

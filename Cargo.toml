@@ -20,6 +20,7 @@ ureq = "2.10.1"
 librespot-core = "0.5.0"
 librespot-playback = "0.5.0"
 derive_setters = "0.1.6"
+unicode-width = "0.2.0"
 
 [profile.dev]
 opt-level = 0

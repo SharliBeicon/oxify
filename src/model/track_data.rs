@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct SearchData {
     pub tracks: Option<TrackCollection>,
     pub artists: Option<ArtistCollection>,
@@ -8,7 +8,7 @@ pub struct SearchData {
     pub playlists: Option<PlaylistCollection>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct TrackCollection {
     pub href: String,
     pub limit: u32,
@@ -19,7 +19,7 @@ pub struct TrackCollection {
     pub items: Vec<TrackItem>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct TrackItem {
     pub album: Album,
     pub artists: Vec<Artist>,
@@ -40,7 +40,7 @@ pub struct TrackItem {
     pub is_local: bool,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct ArtistCollection {
     pub href: String,
     pub limit: u32,
@@ -51,7 +51,7 @@ pub struct ArtistCollection {
     pub items: Vec<ArtistItem>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct ArtistItem {
     pub external_urls: ExternalUrls,
     pub followers: Option<Followers>,
@@ -64,7 +64,7 @@ pub struct ArtistItem {
     pub uri: String,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct AlbumCollection {
     pub href: String,
     pub limit: u32,
@@ -75,7 +75,7 @@ pub struct AlbumCollection {
     pub items: Vec<Album>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct PlaylistCollection {
     pub href: String,
     pub limit: u32,
@@ -86,7 +86,7 @@ pub struct PlaylistCollection {
     pub items: Vec<PlaylistItem>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct PlaylistItem {
     pub collaborative: bool,
     pub description: String,
@@ -101,13 +101,13 @@ pub struct PlaylistItem {
     pub uri: String,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct TrackReference {
     pub href: String,
     pub total: u32,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Album {
     pub album_type: String,
     pub total_tracks: u32,
@@ -123,7 +123,7 @@ pub struct Album {
     pub artists: Vec<Artist>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Artist {
     pub external_urls: ExternalUrls,
     pub href: String,
@@ -132,25 +132,25 @@ pub struct Artist {
     pub uri: String,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct ExternalIds {
     pub isrc: Option<String>,
     pub ean: Option<String>,
     pub upc: Option<String>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct ExternalUrls {
     pub spotify: String,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Followers {
     pub href: Option<String>,
     pub total: u32,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Image {
     pub url: String,
     pub height: Option<u32>,
