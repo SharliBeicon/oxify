@@ -286,7 +286,7 @@ impl AlbumTable {
             .add_modifier(Modifier::REVERSED)
             .fg(self.state.colors.selected_row_style_fg);
 
-        let header = ["Name", "Artist", "Year", "Num Tracks"]
+        let header = ["Name", "Artist", "Year", "Tracks"]
             .into_iter()
             .map(Cell::from)
             .collect::<Row>()
@@ -305,8 +305,8 @@ impl AlbumTable {
             rows,
             [
                 // + 1 is for padding.
-                Constraint::Percentage(30),
-                Constraint::Percentage(30),
+                Constraint::Percentage(35),
+                Constraint::Percentage(25),
                 Constraint::Percentage(25),
                 Constraint::Percentage(15),
             ],

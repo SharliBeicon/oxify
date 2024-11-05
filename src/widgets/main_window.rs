@@ -6,10 +6,7 @@ use ratatui::{
     Frame,
 };
 
-use crate::{
-    model::{track_data::TrackCollection, user_profile::UserProfile},
-    Focus, OxifyEvent,
-};
+use crate::{model::user_profile::UserProfile, Focus, OxifyEvent};
 
 use super::{
     library::Library,
@@ -61,6 +58,9 @@ impl MainWindow {
                         album_table: AlbumTable::new(response.clone().albums.unwrap()),
                     });
                     self.search.reset_cursor();
+                    if let Some(event_tx) = &self.event_tx {
+                        OxifyEvent::send(event_tx, OxifyEvent::Focus(Focus::Player));
+                    }
                 }
                 _ => (),
             }
@@ -125,16 +125,19 @@ impl MainWindow {
             }
             Focus::Library => {
                 self.search.focused = false;
+                self.search.input_mode = InputMode::Normal;
                 self.library.focused = true;
                 self.player.focused = false;
             }
             Focus::Player => {
                 self.search.focused = false;
+                self.search.input_mode = InputMode::Normal;
                 self.library.focused = false;
                 self.player.focused = true;
             }
             Focus::None => {
                 self.search.focused = false;
+                self.search.input_mode = InputMode::Normal;
                 self.library.focused = false;
                 self.player.focused = false;
             }
@@ -149,8 +152,8 @@ fn layout(area: Rect) -> (Rect, Rc<[Rect]>) {
         30.. => 8,
     };
     let library_percentage = match area.width {
-        0..150 => 30,
-        150.. => 25,
+        0..150 => 25,
+        150.. => 20,
     };
     let left_layout = Layout::default()
         .direction(Direction::Horizontal)

@@ -24,6 +24,18 @@ pub struct Player {
     pub focused: bool,
     pub search_data: Option<SearchFullData>,
     pub event_tx: Option<Sender<OxifyEvent>>,
+
+    subpanel_focus: SubpanelFocus,
+}
+
+#[derive(Debug, Default, Clone)]
+enum SubpanelFocus {
+    Tracks,
+    Albums,
+    Artists,
+    Playlists,
+    #[default]
+    None,
 }
 
 #[derive(Debug, Clone)]
@@ -57,14 +69,58 @@ impl Player {
                 .draw(frame, search_layout.albums.inner(margin));
         }
     }
-    pub fn handle_events(&self, key_code: &KeyCode) {
+    pub fn handle_events(&mut self, key_code: &KeyCode) {
         let event_tx = self
             .event_tx
             .clone()
             .expect("Event sender not initialized somehow");
         if self.focused {
             match key_code {
+                KeyCode::Char('t') => self.subpanel_focus = SubpanelFocus::Tracks,
+                KeyCode::Char('a') => self.subpanel_focus = SubpanelFocus::Albums,
+                KeyCode::Char('r') => self.subpanel_focus = SubpanelFocus::Artists,
+                KeyCode::Char('p') => self.subpanel_focus = SubpanelFocus::Playlists,
                 _ => (),
+            }
+
+            match self.subpanel_focus {
+                SubpanelFocus::Tracks => match key_code {
+                    KeyCode::Up | KeyCode::Char('k') => self
+                        .search_data
+                        .as_mut()
+                        .expect("Search data is empty")
+                        .track_table
+                        .previous_row(),
+                    KeyCode::Down | KeyCode::Char('j') => self
+                        .search_data
+                        .as_mut()
+                        .expect("Search data is empty")
+                        .track_table
+                        .next_row(),
+                    _ => (),
+                },
+                SubpanelFocus::Albums => match key_code {
+                    KeyCode::Up | KeyCode::Char('k') => self
+                        .search_data
+                        .as_mut()
+                        .expect("Search data is empty")
+                        .album_table
+                        .previous_row(),
+                    KeyCode::Down | KeyCode::Char('j') => self
+                        .search_data
+                        .as_mut()
+                        .expect("Search data is empty")
+                        .album_table
+                        .next_row(),
+                    _ => (),
+                },
+                SubpanelFocus::Artists => match key_code {
+                    _ => (),
+                },
+                SubpanelFocus::Playlists => match key_code {
+                    _ => (),
+                },
+                SubpanelFocus::None => (),
             }
         } else {
             match key_code {
@@ -130,18 +186,69 @@ impl Widget for Player {
                     .block(player_block)
                     .render(area, buf);
             }
-            Some(search_data) => {
+            Some(_) => {
                 let search_layout = search_content_layout(area);
-                let tracks_block = Block::bordered().title("Tracks");
-                let albums_block = Block::bordered().title("Albums");
-                let artists_block = Block::bordered().title("Artists");
-                let playlists_block = Block::bordered().title("Playlists");
+                let mut tracks_title =
+                    Title::from(Line::from(vec!["[T]".bold().blue(), "racks".into()]));
+                let mut tracks_block = Block::bordered().fg(Color::Yellow);
+
+                let mut albums_title =
+                    Title::from(Line::from(vec!["[A]".bold().blue(), "lbums".into()]));
+                let mut albums_block = Block::bordered().fg(Color::Yellow);
+
+                let mut artists_title = Title::from(Line::from(vec![
+                    "A".into(),
+                    "[R]".bold().blue(),
+                    "tists".into(),
+                ]));
+                let mut artists_block = Block::bordered().fg(Color::Yellow);
+
+                let mut playlists_title =
+                    Title::from(Line::from(vec!["[P]".bold().blue(), "laylists".into()]));
+                let mut playlists_block = Block::bordered().fg(Color::Yellow);
+
+                match self.subpanel_focus {
+                    SubpanelFocus::Tracks => {
+                        tracks_title =
+                            Title::from(Line::from(vec!["[T]".bold().light_red(), "racks".into()]));
+                        tracks_block = tracks_block.fg(Color::Cyan);
+                    }
+                    SubpanelFocus::Albums => {
+                        albums_title =
+                            Title::from(Line::from(vec!["[A]".bold().light_red(), "lbums".into()]));
+                        albums_block = albums_block.fg(Color::Cyan);
+                    }
+                    SubpanelFocus::Artists => {
+                        artists_title = Title::from(Line::from(vec![
+                            "A".into(),
+                            "[R]".bold().light_red(),
+                            "tists".into(),
+                        ]));
+                        artists_block = artists_block.fg(Color::Cyan);
+                    }
+                    SubpanelFocus::Playlists => {
+                        playlists_title = Title::from(Line::from(vec![
+                            "[P]".bold().light_red(),
+                            "laylists".into(),
+                        ]));
+                        playlists_block = playlists_block.fg(Color::Cyan);
+                    }
+                    SubpanelFocus::None => (),
+                }
 
                 player_block.title(title).render(area, buf);
-                tracks_block.render(search_layout.tracks, buf);
-                albums_block.render(search_layout.albums, buf);
-                artists_block.render(search_layout.artists, buf);
-                playlists_block.render(search_layout.playlists, buf);
+                tracks_block
+                    .title(tracks_title)
+                    .render(search_layout.tracks, buf);
+                albums_block
+                    .title(albums_title)
+                    .render(search_layout.albums, buf);
+                artists_block
+                    .title(artists_title)
+                    .render(search_layout.artists, buf);
+                playlists_block
+                    .title(playlists_title)
+                    .render(search_layout.playlists, buf);
             }
         }
     }

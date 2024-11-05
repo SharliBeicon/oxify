@@ -75,7 +75,7 @@ impl App<'_> {
                         Ok(response) => {
                             OxifyEvent::send(&event_tx, OxifyEvent::SearchResponse(response))
                         }
-                        _ => todo!(),
+                        _ => (),
                     }
                 }
                 _ => (),
