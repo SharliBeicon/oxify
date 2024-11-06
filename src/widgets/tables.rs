@@ -49,23 +49,12 @@ struct TrackData {
     artist: String,
     album: String,
     duration: String,
+    uri: String,
 }
 
 impl TrackData {
     const fn ref_array(&self) -> [&String; 4] {
         [&self.name, &self.artist, &self.album, &self.duration]
-    }
-
-    fn name(&self) -> &str {
-        &self.name
-    }
-
-    fn album(&self) -> &str {
-        &self.album
-    }
-
-    fn duration(&self) -> &str {
-        &self.duration
     }
 }
 
@@ -101,6 +90,12 @@ impl TrackTable {
         };
         self.state.table_state.select(Some(i));
         self.state.scroll_state = self.state.scroll_state.position(i * ITEM_HEIGHT);
+    }
+
+    pub fn selected_uri(&mut self) -> Option<String> {
+        let selected = self.state.table_state.selected()?;
+
+        Some(self.items[selected].uri.clone())
     }
 
     pub fn previous_row(&mut self) {
@@ -193,6 +188,7 @@ impl From<TrackCollection> for Vec<TrackData> {
                 artist: track_item.artists[0].name.clone(),
                 album: track_item.album.name.clone(),
                 duration: millis_to_mm_ss(track_item.duration_ms),
+                uri: track_item.uri.clone(),
             })
             .collect()
     }
@@ -209,18 +205,6 @@ struct AlbumData {
 impl AlbumData {
     const fn ref_array(&self) -> [&String; 4] {
         [&self.name, &self.artist, &self.year, &self.num_songs]
-    }
-
-    fn name(&self) -> &str {
-        &self.name
-    }
-
-    fn year(&self) -> &str {
-        &self.year
-    }
-
-    fn num_songs(&self) -> &str {
-        &self.num_songs
     }
 }
 

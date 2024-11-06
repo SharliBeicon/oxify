@@ -5,7 +5,10 @@ use std::fs::OpenOptions;
 use std::io;
 use std::time::SystemTime;
 
-fn main() -> io::Result<()> {
+#[tokio::main]
+async fn main() -> io::Result<()> {
+    let _ = rustls::crypto::aws_lc_rs::default_provider().install_default();
+
     let dt: DateTime<Utc> = SystemTime::now().into();
     let filename = dt.format("/tmp/%d-%m-%Y-oxify.log").to_string();
     let file = OpenOptions::new()

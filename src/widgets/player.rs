@@ -11,7 +11,7 @@ use ratatui::{
     },
 };
 
-use crate::{model::track_data::SearchData, Focus, OxifyEvent};
+use crate::{model::track_data::SearchData, spotify::backend, Focus, OxifyEvent};
 
 use super::{
     centered_height,
@@ -25,11 +25,11 @@ pub struct Player {
     pub search_data: Option<SearchFullData>,
     pub event_tx: Option<Sender<OxifyEvent>>,
 
-    subpanel_focus: SubpanelFocus,
+    pub subpanel_focus: SubpanelFocus,
 }
 
 #[derive(Debug, Default, Clone)]
-enum SubpanelFocus {
+pub enum SubpanelFocus {
     Tracks,
     Albums,
     Artists,
@@ -84,36 +84,31 @@ impl Player {
             }
 
             match self.subpanel_focus {
-                SubpanelFocus::Tracks => match key_code {
-                    KeyCode::Up | KeyCode::Char('k') => self
-                        .search_data
-                        .as_mut()
-                        .expect("Search data is empty")
-                        .track_table
-                        .previous_row(),
-                    KeyCode::Down | KeyCode::Char('j') => self
-                        .search_data
-                        .as_mut()
-                        .expect("Search data is empty")
-                        .track_table
-                        .next_row(),
-                    _ => (),
-                },
-                SubpanelFocus::Albums => match key_code {
-                    KeyCode::Up | KeyCode::Char('k') => self
-                        .search_data
-                        .as_mut()
-                        .expect("Search data is empty")
-                        .album_table
-                        .previous_row(),
-                    KeyCode::Down | KeyCode::Char('j') => self
-                        .search_data
-                        .as_mut()
-                        .expect("Search data is empty")
-                        .album_table
-                        .next_row(),
-                    _ => (),
-                },
+                SubpanelFocus::Tracks => {
+                    let search_data = self.search_data.as_mut().expect("Search data is empty");
+                    match key_code {
+                        KeyCode::Up | KeyCode::Char('k') => search_data.track_table.previous_row(),
+                        KeyCode::Down | KeyCode::Char('j') => search_data.track_table.next_row(),
+                        KeyCode::Enter => {
+                            if let Some(uri) = search_data.track_table.selected_uri() {
+                                let event_tx = self
+                                    .event_tx
+                                    .as_ref()
+                                    .expect("Event sender not initialized");
+                                OxifyEvent::send(&event_tx, OxifyEvent::PlayUri(uri));
+                            }
+                        }
+                        _ => (),
+                    }
+                }
+                SubpanelFocus::Albums => {
+                    let search_data = self.search_data.as_mut().expect("Search data is empty");
+                    match key_code {
+                        KeyCode::Up | KeyCode::Char('k') => search_data.album_table.previous_row(),
+                        KeyCode::Down | KeyCode::Char('j') => search_data.album_table.next_row(),
+                        _ => (),
+                    }
+                }
                 SubpanelFocus::Artists => match key_code {
                     _ => (),
                 },

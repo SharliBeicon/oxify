@@ -29,6 +29,7 @@ pub enum OxifyEvent {
     SearchResponse(SearchData),
     InputMode(InputMode),
     Popup(Popup<'static>),
+    PlayUri(String),
     ClosePopup,
 }
 

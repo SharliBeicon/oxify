@@ -17,10 +17,11 @@ serde = { version = "1.0.210", features = ["derive"] }
 serde_json = "1.0.132"
 simplelog = "0.12.2"
 ureq = "2.10.1"
-librespot-core = "0.5.0"
-librespot-playback = "0.5.0"
+librespot = { version = "0.5.0", features = ["rodio-backend"] }
 derive_setters = "0.1.6"
 unicode-width = "0.2.0"
+tokio = { version = "1.41.0", features = ["rt", "macros"] }
+rustls = "0.23.16"
 
 [profile.dev]
 opt-level = 0

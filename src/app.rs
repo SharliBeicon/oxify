@@ -1,11 +1,11 @@
-use std::{io, sync::mpsc};
+use std::{io, sync::mpsc, thread::spawn};
 
 use crossterm::event::Event as TerminalEvent;
 use ratatui::DefaultTerminal;
 
 use crate::{
     auth::{AuthState, LoginState},
-    spotify,
+    spotify::{self, backend},
     widgets::{await_login::AwaitLogin, landing::Landing, main_window::MainWindow, popup::Popup},
     OxifyEvent,
 };
@@ -60,26 +60,35 @@ impl App<'_> {
             let oxify_event: Option<OxifyEvent> = event_rx.try_recv().ok();
 
             // Common oxify events
-            oxify_event.as_ref().map(|oxify_event| match oxify_event {
-                OxifyEvent::Exit => self.exit = true,
-                OxifyEvent::LoginAttempt => self.auth_state.login_state = LoginState::Loading,
-                OxifyEvent::ClosePopup => self.active_popup = None,
-                OxifyEvent::Popup(popup) => self.active_popup = Some(popup.clone()),
-                OxifyEvent::SearchRequest(query) => {
-                    let token = self
-                        .auth_state
-                        .access_token
-                        .as_ref()
-                        .expect("Token not found somehow");
-                    match spotify::api::search(token.to_string(), query.to_string()) {
-                        Ok(response) => {
-                            OxifyEvent::send(&event_tx, OxifyEvent::SearchResponse(response))
+            if let Some(ref oxify_event) = oxify_event {
+                match oxify_event {
+                    OxifyEvent::Exit => self.exit = true,
+                    OxifyEvent::LoginAttempt => self.auth_state.login_state = LoginState::Loading,
+                    OxifyEvent::ClosePopup => self.active_popup = None,
+                    OxifyEvent::Popup(popup) => self.active_popup = Some(popup.clone()),
+                    OxifyEvent::SearchRequest(query) => {
+                        let token = self
+                            .auth_state
+                            .access_token
+                            .as_ref()
+                            .expect("Token not found somehow");
+                        match spotify::api::search(token.to_string(), query.to_string()) {
+                            Ok(response) => {
+                                OxifyEvent::send(&event_tx, OxifyEvent::SearchResponse(response))
+                            }
+                            _ => (),
                         }
-                        _ => (),
                     }
+                    OxifyEvent::PlayUri(uri) => {
+                        if let Some(token) = &self.auth_state.access_token {
+                            let uri = uri.clone();
+                            let token = token.clone();
+                            tokio::spawn(backend::play_uri(token, uri));
+                        }
+                    }
+                    _ => (),
                 }
-                _ => (),
-            });
+            }
 
             // Handle events depending of the auth state
             match self.auth_state.login_state {

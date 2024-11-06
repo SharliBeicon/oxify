@@ -10,7 +10,7 @@ use crate::{model::user_profile::UserProfile, Focus, OxifyEvent};
 
 use super::{
     library::Library,
-    player::{Player, SearchFullData},
+    player::{Player, SearchFullData, SubpanelFocus},
     search::Search,
     tables::{AlbumTable, TrackTable},
     InputMode,
@@ -122,12 +122,14 @@ impl MainWindow {
                 self.search.focused = true;
                 self.library.focused = false;
                 self.player.focused = false;
+                self.player.subpanel_focus = SubpanelFocus::None;
             }
             Focus::Library => {
                 self.search.focused = false;
                 self.search.input_mode = InputMode::Normal;
                 self.library.focused = true;
                 self.player.focused = false;
+                self.player.subpanel_focus = SubpanelFocus::None;
             }
             Focus::Player => {
                 self.search.focused = false;
@@ -140,6 +142,7 @@ impl MainWindow {
                 self.search.input_mode = InputMode::Normal;
                 self.library.focused = false;
                 self.player.focused = false;
+                self.player.subpanel_focus = SubpanelFocus::None;
             }
         };
     }
