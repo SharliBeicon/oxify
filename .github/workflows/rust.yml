@@ -13,6 +13,10 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
+    env:
+      CLIENT_ID: ${{ vars.CLIENT_ID }}
+      SECRET_ID: ${{ vars.SECRET_ID }}
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
