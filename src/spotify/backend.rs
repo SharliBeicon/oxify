@@ -1,50 +1,49 @@
-use std::{error::Error, io};
+use std::sync::Arc;
 
 use librespot::{
-    core::{
-        spotify_id::{self, SpotifyItemType},
-        Session, SessionConfig, SpotifyId,
-    },
-    discovery::Credentials,
+    core::{spotify_id::SpotifyItemType, Session, SpotifyId},
     playback::{
         audio_backend::BACKENDS,
         config::{AudioFormat, PlayerConfig},
-        mixer::NoOpVolume,
+        mixer::{MixerConfig, MIXERS},
         player::Player,
     },
 };
 
-pub async fn play_uri(token: String, uri: String) {
-    let spotify_id = match SpotifyId::from_uri(&uri) {
-        Ok(spotify_id) => spotify_id,
-        Err(err) => {
-            log::error!("Can't get uri: {err}");
-            return;
-        }
-    };
+pub struct Backend {
+    player: Arc<Player>,
+}
 
-    let credentials = Credentials::with_access_token(token);
-    let session = Session::new(SessionConfig::default(), None);
-    if let Err(err) = session.connect(credentials, false).await {
-        log::error!("Cannot init a playback connection: {err}");
-    }
-
-    let player = Player::new(
-        PlayerConfig::default(),
-        session,
-        Box::new(NoOpVolume),
-        move || (BACKENDS[0].1)(None, AudioFormat::default()),
-    );
-
-    match spotify_id.item_type {
-        SpotifyItemType::Track => player.load(spotify_id, true, 0),
-        _ => {
-            log::error!("Unsuported spotify id format");
-            return;
+impl Backend {
+    pub fn new(session: Session) -> Self {
+        Self {
+            player: Player::new(
+                PlayerConfig::default(),
+                session,
+                (MIXERS[0].1)(MixerConfig::default()).get_soft_volume(),
+                move || (BACKENDS[0].1)(None, AudioFormat::default()),
+            ),
         }
     }
+    pub async fn play_uri(&self, uri: String) {
+        let spotify_id = match SpotifyId::from_uri(&uri) {
+            Ok(spotify_id) => spotify_id,
+            Err(err) => {
+                log::error!("Can't get uri: {err}");
+                return;
+            }
+        };
 
-    let mut rx = player.get_player_event_channel();
+        match spotify_id.item_type {
+            SpotifyItemType::Track => self.player.load(spotify_id, true, 0),
+            _ => {
+                log::error!("Unsuported spotify id format");
+                return;
+            }
+        }
 
-    while let Some(event) = rx.recv().await {}
+        let mut rx = self.player.get_player_event_channel();
+
+        while let Some(event) = rx.recv().await {}
+    }
 }

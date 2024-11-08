@@ -149,11 +149,6 @@ impl MainWindow {
 }
 
 fn layout(area: Rect) -> (Rect, Rc<[Rect]>) {
-    let search_bar_percentage = match area.height {
-        0..20 => 14,
-        20..30 => 12,
-        30.. => 8,
-    };
     let library_percentage = match area.width {
         0..150 => 25,
         150.. => 20,
@@ -168,10 +163,7 @@ fn layout(area: Rect) -> (Rect, Rc<[Rect]>) {
 
     let right_layout = Layout::default()
         .direction(Direction::Vertical)
-        .constraints(vec![
-            Constraint::Percentage(search_bar_percentage),
-            Constraint::Percentage(100 - search_bar_percentage),
-        ])
+        .constraints(vec![Constraint::Min(3), Constraint::Percentage(100)])
         .split(left_layout[1]);
 
     (left_layout[0], right_layout)

@@ -1,8 +1,13 @@
+use librespot::{
+    core::{Session, SessionConfig},
+    discovery::Credentials,
+};
+
 use crate::{
     model::{track_data::SearchData, user_profile::UserProfile},
     AGENT,
 };
-use std::io;
+use std::io::{self, ErrorKind};
 
 const BASE_URL: &'static str = "https://api.spotify.com/v1";
 
@@ -37,4 +42,17 @@ pub fn search(token: String, query: String) -> io::Result<SearchData> {
             Ok(user_profile)
         }
     }
+}
+
+pub async fn get_backend_session(token: String) -> io::Result<Session> {
+    let credentials = Credentials::with_access_token(token);
+    let session = Session::new(SessionConfig::default(), None);
+    if let Err(err) = session.connect(credentials, false).await {
+        return Err(io::Error::new(
+            ErrorKind::ConnectionRefused,
+            format!("Can't get a backend session: {}", err),
+        ));
+    }
+
+    Ok(session)
 }

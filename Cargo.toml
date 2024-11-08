@@ -20,7 +20,7 @@ ureq = "2.10.1"
 librespot = { version = "0.5.0", features = ["rodio-backend"] }
 derive_setters = "0.1.6"
 unicode-width = "0.2.0"
-tokio = { version = "1.41.0", features = ["rt", "macros"] }
+tokio = { version = "1.41.0", features = ["rt-multi-thread", "macros"] }
 rustls = "0.23.16"
 
 [profile.dev]

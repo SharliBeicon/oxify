@@ -1,20 +1,24 @@
-use std::{io, sync::mpsc, thread::spawn};
+use std::{
+    io,
+    sync::{mpsc, Arc},
+};
 
 use crossterm::event::Event as TerminalEvent;
 use ratatui::DefaultTerminal;
+use tokio::sync::RwLock;
 
 use crate::{
     auth::{AuthState, LoginState},
-    spotify::{self, backend},
+    spotify::{self, backend::Backend},
     widgets::{await_login::AwaitLogin, landing::Landing, main_window::MainWindow, popup::Popup},
     OxifyEvent,
 };
 
-#[derive(Debug)]
 pub struct App<'a> {
     exit: bool,
     auth_state: AuthState,
     active_popup: Option<Popup<'a>>,
+    backend: Option<Arc<RwLock<Backend>>>,
 
     // Screens
     landing: Landing,
@@ -28,13 +32,14 @@ impl App<'_> {
             exit: false,
             auth_state: AuthState::default(),
             active_popup: None,
+            backend: None,
             landing: Landing::default(),
             await_login: AwaitLogin::default(),
             main_window: MainWindow::default(),
         }
     }
 
-    pub fn run(&mut self, terminal: &mut DefaultTerminal) -> io::Result<()> {
+    pub async fn run(&mut self, terminal: &mut DefaultTerminal) -> io::Result<()> {
         let (auth_tx, auth_rx) = mpsc::channel::<AuthState>();
         let (event_tx, event_rx) = mpsc::channel::<OxifyEvent>();
 
@@ -80,10 +85,10 @@ impl App<'_> {
                         }
                     }
                     OxifyEvent::PlayUri(uri) => {
-                        if let Some(token) = &self.auth_state.access_token {
+                        let self_backend_clone = self.backend.clone();
+                        if let Some(backend) = self_backend_clone {
                             let uri = uri.clone();
-                            let token = token.clone();
-                            tokio::spawn(backend::play_uri(token, uri));
+                            tokio::spawn(async move { backend.read().await.play_uri(uri).await });
                         }
                     }
                     _ => (),
@@ -101,15 +106,23 @@ impl App<'_> {
                     terminal.draw(|frame| self.await_login.draw(frame))?;
                 }
                 LoginState::In => {
+                    let access_token = self
+                        .auth_state
+                        .access_token
+                        .as_ref()
+                        .expect("Token not found somehow")
+                        .to_string();
                     // Load user profile on login
                     if self.main_window.user_profile.is_none() {
-                        self.main_window.user_profile = Some(spotify::api::get_user_profile(
-                            self.auth_state
-                                .access_token
-                                .as_ref()
-                                .expect("Token not found somehow")
-                                .to_string(),
-                        )?);
+                        self.main_window.user_profile =
+                            Some(spotify::api::get_user_profile(access_token.clone())?);
+                    }
+
+                    //Load backend session on login
+                    if self.backend.is_none() {
+                        self.backend = Some(Arc::new(RwLock::new(Backend::new(
+                            spotify::api::get_backend_session(access_token.clone()).await?,
+                        ))));
                     }
 
                     self.main_window
