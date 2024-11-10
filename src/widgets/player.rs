@@ -1,4 +1,5 @@
 use std::sync::mpsc::Sender;
+use strum::IntoEnumIterator;
 
 use crossterm::event::KeyCode;
 use ratatui::{
@@ -7,68 +8,61 @@ use ratatui::{
     prelude::*,
     widgets::{
         block::{Position, Title},
-        Block, Borders, Padding, Paragraph, Widget, Wrap,
+        Block, Borders, Padding, Paragraph, Tabs, Widget, Wrap,
     },
 };
+use style::palette::tailwind;
 
-use crate::{model::track_data::SearchData, spotify::backend, Focus, OxifyEvent};
+use crate::{model::track_data::SearchData, Focus, OxifyEvent};
 
 use super::{
     centered_height,
-    tables::{AlbumTable, TrackTable},
+    tables::{AlbumDataTable, TrackDataTable},
+    tabs::SelectedTab,
 };
 
-#[derive(Debug, Default, Clone)]
+#[derive(Default, Clone)]
 pub struct Player {
     pub username: String,
     pub focused: bool,
     pub search_data: Option<SearchFullData>,
     pub event_tx: Option<Sender<OxifyEvent>>,
 
-    pub subpanel_focus: SubpanelFocus,
-}
-
-#[derive(Debug, Default, Clone)]
-pub enum SubpanelFocus {
-    Tracks,
-    Albums,
-    Artists,
-    Playlists,
-    #[default]
-    None,
+    pub selected_tab: SelectedTab,
 }
 
 #[derive(Debug, Clone)]
 pub struct SearchFullData {
     pub data: SearchData,
-    pub track_table: TrackTable,
-    pub album_table: AlbumTable,
-}
-
-struct SearchLayout {
-    pub albums: Rect,
-    pub tracks: Rect,
-    pub artists: Rect,
-    pub playlists: Rect,
+    pub track_table: Option<TrackDataTable>,
+    pub album_table: Option<AlbumDataTable>,
 }
 
 impl Player {
     pub fn draw(&mut self, frame: &mut Frame, area: Rect) {
         frame.render_widget(self.clone(), area);
         if let Some(search_data) = &mut self.search_data {
-            let search_layout = search_content_layout(area);
-            let margin = Margin {
-                horizontal: 1,
-                vertical: 1,
-            };
-            search_data
-                .track_table
-                .draw(frame, search_layout.tracks.inner(margin));
-            search_data
-                .album_table
-                .draw(frame, search_layout.albums.inner(margin));
+            let (content_area, _) = player_content_layout(area);
+
+            let [_, content_area] =
+                Layout::vertical([Constraint::Length(2), Constraint::Min(0)]).areas(content_area);
+            match self.selected_tab {
+                SelectedTab::Tracks => search_data
+                    .track_table
+                    .as_mut()
+                    .expect("TODO")
+                    .draw(frame, content_area),
+                SelectedTab::Albums => search_data
+                    .album_table
+                    .as_mut()
+                    .expect("TODO")
+                    .draw(frame, content_area),
+                SelectedTab::Artists => (),
+                SelectedTab::Playlists => (),
+            }
         }
     }
+
     pub fn handle_events(&mut self, key_code: &KeyCode) {
         let event_tx = self
             .event_tx
@@ -76,46 +70,67 @@ impl Player {
             .expect("Event sender not initialized somehow");
         if self.focused {
             match key_code {
-                KeyCode::Char('t') => self.subpanel_focus = SubpanelFocus::Tracks,
-                KeyCode::Char('a') => self.subpanel_focus = SubpanelFocus::Albums,
-                KeyCode::Char('r') => self.subpanel_focus = SubpanelFocus::Artists,
-                KeyCode::Char('p') => self.subpanel_focus = SubpanelFocus::Playlists,
+                KeyCode::Char('t') => self.selected_tab = SelectedTab::Tracks,
+                KeyCode::Char('a') => self.selected_tab = SelectedTab::Albums,
+                KeyCode::Char('r') => self.selected_tab = SelectedTab::Artists,
+                KeyCode::Char('p') => self.selected_tab = SelectedTab::Playlists,
+                KeyCode::Left | KeyCode::Char('h') => {
+                    self.selected_tab = self.selected_tab.previous()
+                }
+                KeyCode::Right | KeyCode::Char('l') => self.selected_tab = self.selected_tab.next(),
                 _ => (),
             }
 
-            match self.subpanel_focus {
-                SubpanelFocus::Tracks => {
+            match self.selected_tab {
+                SelectedTab::Tracks => {
                     let search_data = self.search_data.as_mut().expect("Search data is empty");
                     match key_code {
-                        KeyCode::Up | KeyCode::Char('k') => search_data.track_table.previous_row(),
-                        KeyCode::Down | KeyCode::Char('j') => search_data.track_table.next_row(),
+                        KeyCode::Up | KeyCode::Char('k') => {
+                            if let Some(track_table) = &mut search_data.track_table {
+                                track_table.previous_row();
+                            }
+                        }
+                        KeyCode::Down | KeyCode::Char('j') => {
+                            if let Some(track_table) = &mut search_data.track_table {
+                                track_table.next_row();
+                            }
+                        }
                         KeyCode::Enter => {
-                            if let Some(uri) = search_data.track_table.selected_uri() {
-                                let event_tx = self
-                                    .event_tx
-                                    .as_ref()
-                                    .expect("Event sender not initialized");
-                                OxifyEvent::send(&event_tx, OxifyEvent::PlayUri(uri));
+                            if let Some(track_table) = &mut search_data.track_table {
+                                if let Some(uri) = track_table.selected_uri() {
+                                    let event_tx = self
+                                        .event_tx
+                                        .as_ref()
+                                        .expect("Event sender not initialized");
+                                    OxifyEvent::send(&event_tx, OxifyEvent::PlayUri(uri));
+                                }
                             }
                         }
                         _ => (),
                     }
                 }
-                SubpanelFocus::Albums => {
+                SelectedTab::Albums => {
                     let search_data = self.search_data.as_mut().expect("Search data is empty");
                     match key_code {
-                        KeyCode::Up | KeyCode::Char('k') => search_data.album_table.previous_row(),
-                        KeyCode::Down | KeyCode::Char('j') => search_data.album_table.next_row(),
+                        KeyCode::Up | KeyCode::Char('k') => {
+                            if let Some(album_table) = &mut search_data.album_table {
+                                album_table.previous_row();
+                            }
+                        }
+                        KeyCode::Down | KeyCode::Char('j') => {
+                            if let Some(album_table) = &mut search_data.album_table {
+                                album_table.next_row();
+                            }
+                        }
                         _ => (),
                     }
                 }
-                SubpanelFocus::Artists => match key_code {
+                SelectedTab::Artists => match key_code {
                     _ => (),
                 },
-                SubpanelFocus::Playlists => match key_code {
+                SelectedTab::Playlists => match key_code {
                     _ => (),
                 },
-                SubpanelFocus::None => (),
             }
         } else {
             match key_code {
@@ -127,6 +142,18 @@ impl Player {
                 _ => (),
             }
         }
+    }
+
+    fn render_tabs(&self, area: Rect, buf: &mut Buffer) {
+        let titles = SelectedTab::iter().map(SelectedTab::title);
+        let highlight_style = (Color::default(), tailwind::AMBER.c900);
+        let selected_tab_index = self.selected_tab as usize;
+        Tabs::new(titles)
+            .highlight_style(highlight_style)
+            .select(selected_tab_index)
+            .padding(" ", " ")
+            .divider("|")
+            .render(area, buf);
     }
 }
 
@@ -140,12 +167,7 @@ impl Widget for Player {
         };
         let instructions = Title::from(Line::from(vec![" Help ".into(), "<?> ".blue().bold()]));
         let title: Title;
-        let mut player_block = Block::bordered().title(
-            instructions
-                .clone()
-                .alignment(Alignment::Right)
-                .position(Position::Bottom),
-        );
+        let mut player_block = Block::bordered();
 
         if !self.focused {
             title = Title::from(Line::from(vec![" [3] ".blue().bold(), "Player ".bold()]));
@@ -173,7 +195,12 @@ impl Widget for Player {
                     &area,
                 )));
 
-                player_block = player_block.title(title);
+                player_block = player_block.title(title).title(
+                    instructions
+                        .clone()
+                        .alignment(Alignment::Right)
+                        .position(Position::Bottom),
+                );
 
                 Paragraph::new(content)
                     .wrap(Wrap { trim: true })
@@ -182,94 +209,43 @@ impl Widget for Player {
                     .render(area, buf);
             }
             Some(_) => {
-                let search_layout = search_content_layout(area);
-                let mut tracks_title =
-                    Title::from(Line::from(vec!["[T]".bold().blue(), "racks".into()]));
-                let mut tracks_block = Block::bordered().fg(Color::Yellow);
+                let (content_area, player_area) = player_content_layout(area);
 
-                let mut albums_title =
-                    Title::from(Line::from(vec!["[A]".bold().blue(), "lbums".into()]));
-                let mut albums_block = Block::bordered().fg(Color::Yellow);
-
-                let mut artists_title = Title::from(Line::from(vec![
-                    "A".into(),
-                    "[R]".bold().blue(),
-                    "tists".into(),
-                ]));
-                let mut artists_block = Block::bordered().fg(Color::Yellow);
-
-                let mut playlists_title =
-                    Title::from(Line::from(vec!["[P]".bold().blue(), "laylists".into()]));
-                let mut playlists_block = Block::bordered().fg(Color::Yellow);
-
-                match self.subpanel_focus {
-                    SubpanelFocus::Tracks => {
-                        tracks_title =
-                            Title::from(Line::from(vec!["[T]".bold().light_red(), "racks".into()]));
-                        tracks_block = tracks_block.fg(Color::Cyan);
-                    }
-                    SubpanelFocus::Albums => {
-                        albums_title =
-                            Title::from(Line::from(vec!["[A]".bold().light_red(), "lbums".into()]));
-                        albums_block = albums_block.fg(Color::Cyan);
-                    }
-                    SubpanelFocus::Artists => {
-                        artists_title = Title::from(Line::from(vec![
-                            "A".into(),
-                            "[R]".bold().light_red(),
-                            "tists".into(),
-                        ]));
-                        artists_block = artists_block.fg(Color::Cyan);
-                    }
-                    SubpanelFocus::Playlists => {
-                        playlists_title = Title::from(Line::from(vec![
-                            "[P]".bold().light_red(),
-                            "laylists".into(),
-                        ]));
-                        playlists_block = playlists_block.fg(Color::Cyan);
-                    }
-                    SubpanelFocus::None => (),
-                }
+                let [tabs_area, _] = Layout::vertical([Constraint::Length(1), Constraint::Min(0)])
+                    .areas(content_area);
 
                 player_block.title(title).render(area, buf);
-                tracks_block
-                    .title(tracks_title)
-                    .render(search_layout.tracks, buf);
-                albums_block
-                    .title(albums_title)
-                    .render(search_layout.albums, buf);
-                artists_block
-                    .title(artists_title)
-                    .render(search_layout.artists, buf);
-                playlists_block
-                    .title(playlists_title)
-                    .render(search_layout.playlists, buf);
+                self.render_tabs(tabs_area, buf);
+                Block::default()
+                    .border_set(symbols::border::Set {
+                        top_left: symbols::line::NORMAL.vertical_right,
+                        top_right: symbols::line::NORMAL.vertical_left,
+                        ..symbols::border::PLAIN
+                    })
+                    .borders(Borders::ALL)
+                    .title(
+                        instructions
+                            .clone()
+                            .alignment(Alignment::Right)
+                            .position(Position::Bottom),
+                    )
+                    .render(player_area, buf);
             }
         }
     }
 }
 
-fn search_content_layout(area: Rect) -> SearchLayout {
+fn player_content_layout(area: Rect) -> (Rect, Rect) {
     let outer_layout = Layout::default()
-        .direction(Direction::Horizontal)
-        .constraints(vec![Constraint::Percentage(50), Constraint::Percentage(50)])
-        .split(area.inner(Margin {
-            vertical: 1,
-            horizontal: 2,
-        }));
-    let left_side = Layout::default()
         .direction(Direction::Vertical)
-        .constraints(vec![Constraint::Percentage(50), Constraint::Percentage(50)])
-        .split(outer_layout[0]);
-    let right_side = Layout::default()
-        .direction(Direction::Vertical)
-        .constraints(vec![Constraint::Percentage(50), Constraint::Percentage(50)])
-        .split(outer_layout[1]);
+        .constraints(vec![Constraint::Percentage(85), Constraint::Percentage(15)])
+        .split(area);
 
-    SearchLayout {
-        tracks: left_side[0],
-        artists: left_side[1],
-        albums: right_side[0],
-        playlists: right_side[1],
-    }
+    (
+        outer_layout[0].inner(Margin {
+            vertical: 2,
+            horizontal: 2,
+        }),
+        outer_layout[1],
+    )
 }

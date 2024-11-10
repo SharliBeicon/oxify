@@ -32,12 +32,10 @@ impl AwaitLogin {
             .event_tx
             .clone()
             .expect("Event sender not initialized somehow");
-        if let Some(terminal_event) = terminal_event {
-            if let crossterm::event::Event::Key(key_event) = terminal_event {
-                if key_event.kind == KeyEventKind::Press && key_event.code == KeyCode::Char('q') {
-                    if let Err(err) = event_tx.send(OxifyEvent::Exit) {
-                        log::error!("Cannot send event to main app: {err}")
-                    }
+        if let Some(crossterm::event::Event::Key(key_event)) = terminal_event {
+            if key_event.kind == KeyEventKind::Press && key_event.code == KeyCode::Char('q') {
+                if let Err(err) = event_tx.send(OxifyEvent::Exit) {
+                    log::error!("Cannot send event to main app: {err}")
                 }
             }
         }

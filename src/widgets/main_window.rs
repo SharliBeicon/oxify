@@ -10,13 +10,13 @@ use crate::{model::user_profile::UserProfile, Focus, OxifyEvent};
 
 use super::{
     library::Library,
-    player::{Player, SearchFullData, SubpanelFocus},
+    player::{Player, SearchFullData},
     search::Search,
-    tables::{AlbumTable, TrackTable},
+    tables::{AlbumDataTable, TrackDataTable},
     InputMode,
 };
 
-#[derive(Default, Debug)]
+#[derive(Default)]
 pub struct MainWindow {
     player: Player,
     library: Library,
@@ -54,8 +54,8 @@ impl MainWindow {
                 OxifyEvent::SearchResponse(response) => {
                     self.player.search_data = Some(SearchFullData {
                         data: response.clone(),
-                        track_table: TrackTable::new(response.clone().tracks.unwrap()),
-                        album_table: AlbumTable::new(response.clone().albums.unwrap()),
+                        track_table: response.clone().tracks.map(TrackDataTable::new),
+                        album_table: response.clone().albums.map(AlbumDataTable::new),
                     });
                     self.search.reset_cursor();
                     if let Some(event_tx) = &self.event_tx {
@@ -122,14 +122,12 @@ impl MainWindow {
                 self.search.focused = true;
                 self.library.focused = false;
                 self.player.focused = false;
-                self.player.subpanel_focus = SubpanelFocus::None;
             }
             Focus::Library => {
                 self.search.focused = false;
                 self.search.input_mode = InputMode::Normal;
                 self.library.focused = true;
                 self.player.focused = false;
-                self.player.subpanel_focus = SubpanelFocus::None;
             }
             Focus::Player => {
                 self.search.focused = false;
@@ -142,7 +140,6 @@ impl MainWindow {
                 self.search.input_mode = InputMode::Normal;
                 self.library.focused = false;
                 self.player.focused = false;
-                self.player.subpanel_focus = SubpanelFocus::None;
             }
         };
     }

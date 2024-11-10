@@ -37,7 +37,7 @@ pub fn run(tx: Arc<Sender<HttpMessage>>, state: String) {
             Err(err) => {
                 if let Err(inner_err) = tx.send(HttpMessage::Error(format!(
                     "Error handling callback connection: {}",
-                    err.to_string()
+                    err
                 ))) {
                     log::error!("Error sending callback response to client: {}", inner_err);
                 }

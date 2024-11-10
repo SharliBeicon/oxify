@@ -51,7 +51,7 @@ pub fn login(app_tx: Sender<AuthState>) {
                             );
                         }
 
-                        if let Err(_) = server_thread.join() {
+                        if server_thread.join().is_err() {
                             log::error!("Error joining server thread");
                         }
 

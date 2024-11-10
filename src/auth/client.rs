@@ -51,7 +51,7 @@ pub fn refresh_token(auth_state: &AuthState, client_id: &str) -> io::Result<Auth
         ])
         .map_err(|err| io::Error::new(io::ErrorKind::PermissionDenied, err))?;
 
-    Ok(parse_response(response)?)
+    parse_response(response)
 }
 
 fn parse_response(response: Response) -> io::Result<AuthState> {

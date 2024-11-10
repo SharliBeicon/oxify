@@ -2065,15 +2065,26 @@ dependencies = [
  "librespot",
  "log",
  "open",
+ "oxify_derive",
  "rand",
  "ratatui",
  "rustls 0.23.16",
  "serde",
  "serde_json",
  "simplelog",
+ "strum",
  "tokio",
  "unicode-width 0.2.0",
  "ureq",
+]
+
+[[package]]
+name = "oxify_derive"
+version = "0.1.0"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
 ]
 
 [[package]]
@@ -3035,9 +3046,9 @@ dependencies = [
 
 [[package]]
 name = "syn"
-version = "2.0.85"
+version = "2.0.87"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5023162dfcd14ef8f32034d8bcd4cc5ddc61ef7a247c024a33e24e1f24d21b56"
+checksum = "25aa4ce346d03a6dcd68dd8b4010bcb74e54e62c90c573f394c46eae99aba32d"
 dependencies = [
  "proc-macro2",
  "quote",

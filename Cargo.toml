@@ -4,8 +4,17 @@ version = "0.1.0"
 edition = "2021"
 authors = ["Carlos Tocino <carlostocinocubelo@gmail.com>"]
 description = "A TUI Spotify Client"
+rust-version = "1.82.0"
+readme = "README.md"
+homepage = "https://oxify.rs"
+license = "MIT"
+repository = "https://github.com/sharlibeicon/oxify"
+
+[[bin]]
+name = "oxify"
 
 [dependencies]
+oxify_derive = { path = "oxify_derive" }
 base64 = "0.22.1"
 chrono = "0.4.38"
 crossterm = "0.28.1"
@@ -22,9 +31,14 @@ derive_setters = "0.1.6"
 unicode-width = "0.2.0"
 tokio = { version = "1.41.0", features = ["rt-multi-thread", "macros"] }
 rustls = "0.23.16"
+strum = "0.26.3"
 
 [profile.dev]
 opt-level = 0
 
 [profile.release]
+panic = "abort"
 opt-level = 3
+lto = true
+codegen-utils = 1
+strip = true

@@ -9,7 +9,7 @@ use crate::{
 };
 use std::io::{self, ErrorKind};
 
-const BASE_URL: &'static str = "https://api.spotify.com/v1";
+const BASE_URL: &str = "https://api.spotify.com/v1";
 
 pub fn get_user_profile(token: String) -> io::Result<UserProfile> {
     match AGENT
@@ -32,7 +32,7 @@ pub fn search(token: String, query: String) -> io::Result<SearchData> {
         .set("Authorization", format!("Bearer {}", token).as_str())
         .query("q", &query)
         .query("type", "album,track,artist,playlist")
-        .query("limit", "10")
+        .query("limit", "50")
         .call()
     {
         Err(err) => Err(io::Error::new(io::ErrorKind::PermissionDenied, err)),

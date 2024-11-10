@@ -1,6 +1,6 @@
 use std::sync::mpsc::Sender;
 
-use crossterm::event::{Event, KeyCode, KeyEvent, KeyEventKind};
+use crossterm::event::{Event, KeyCode, KeyEventKind};
 use derive_setters::Setters;
 use ratatui::{
     buffer::Buffer,
@@ -84,10 +84,8 @@ impl Popup<'_> {
     pub fn handle_toggle_popup(event_tx: &Sender<OxifyEvent>, terminal_event: &Option<Event>) {
         if let Some(terminal_event) = terminal_event {
             if let crossterm::event::Event::Key(key_event) = terminal_event {
-                if key_event.kind == KeyEventKind::Press {
-                    if key_event.code == KeyCode::Char('?') {
-                        OxifyEvent::send(event_tx, OxifyEvent::Popup(help_popup()));
-                    }
+                if key_event.kind == KeyEventKind::Press && key_event.code == KeyCode::Char('?') {
+                    OxifyEvent::send(event_tx, OxifyEvent::Popup(help_popup()));
                 }
             }
         }

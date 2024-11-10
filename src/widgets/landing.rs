@@ -30,31 +30,29 @@ impl Landing {
     }
 
     pub fn handle_events(&self, terminal_event: &Option<Event>) {
-        if let Some(terminal_event) = terminal_event {
-            if let crossterm::event::Event::Key(key_event) = terminal_event {
-                if key_event.kind == KeyEventKind::Press {
-                    let event_tx = self
-                        .event_tx
-                        .clone()
-                        .expect("Event sender not initialized somehow");
-                    match key_event.code {
-                        KeyCode::Char(' ') => {
-                            let auth_tx = self
-                                .auth_tx
-                                .clone()
-                                .expect("Event sender not initialized somehow");
-                            if let Err(err) = event_tx.send(OxifyEvent::LoginAttempt) {
-                                log::error!("Cannot send event to main app: {err}")
-                            }
-                            std::thread::spawn(|| auth::api::login(auth_tx));
+        if let Some(crossterm::event::Event::Key(key_event)) = terminal_event {
+            if key_event.kind == KeyEventKind::Press {
+                let event_tx = self
+                    .event_tx
+                    .clone()
+                    .expect("Event sender not initialized somehow");
+                match key_event.code {
+                    KeyCode::Char(' ') => {
+                        let auth_tx = self
+                            .auth_tx
+                            .clone()
+                            .expect("Event sender not initialized somehow");
+                        if let Err(err) = event_tx.send(OxifyEvent::LoginAttempt) {
+                            log::error!("Cannot send event to main app: {err}")
                         }
-                        KeyCode::Char('q') => {
-                            if let Err(err) = event_tx.send(OxifyEvent::Exit) {
-                                log::error!("Cannot send event to main app: {err}")
-                            }
-                        }
-                        _ => (),
+                        std::thread::spawn(|| auth::api::login(auth_tx));
                     }
+                    KeyCode::Char('q') => {
+                        if let Err(err) = event_tx.send(OxifyEvent::Exit) {
+                            log::error!("Cannot send event to main app: {err}")
+                        }
+                    }
+                    _ => (),
                 }
             }
         }

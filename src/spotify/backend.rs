@@ -44,6 +44,6 @@ impl Backend {
 
         let mut rx = self.player.get_player_event_channel();
 
-        while let Some(event) = rx.recv().await {}
+        while let Some(_event) = rx.recv().await {}
     }
 }

@@ -26,6 +26,12 @@ pub struct App<'a> {
     main_window: MainWindow,
 }
 
+impl Default for App<'_> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl App<'_> {
     pub fn new() -> Self {
         Self {
@@ -58,7 +64,7 @@ impl App<'_> {
             // Check for terminal input events
             let terminal_event: Option<TerminalEvent> =
                 crossterm::event::poll(std::time::Duration::new(0, 0))?
-                    .then(|| crossterm::event::read())
+                    .then(crossterm::event::read)
                     .transpose()?;
 
             // Check for oxify app events
