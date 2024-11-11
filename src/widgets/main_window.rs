@@ -12,7 +12,7 @@ use super::{
     library::Library,
     player::{Player, SearchFullData},
     search::Search,
-    tables::{AlbumDataTable, TrackDataTable},
+    tables::{AlbumDataTable, ArtistDataTable, TrackDataTable},
     InputMode,
 };
 
@@ -53,9 +53,10 @@ impl MainWindow {
                 OxifyEvent::InputMode(input_mode) => self.search.input_mode = *input_mode,
                 OxifyEvent::SearchResponse(response) => {
                     self.player.search_data = Some(SearchFullData {
-                        data: response.clone(),
+                        data: *response.clone(),
                         track_table: response.clone().tracks.map(TrackDataTable::new),
                         album_table: response.clone().albums.map(AlbumDataTable::new),
+                        artist_table: response.clone().artists.map(ArtistDataTable::new),
                     });
                     self.search.reset_cursor();
                     if let Some(event_tx) = &self.event_tx {
@@ -146,16 +147,9 @@ impl MainWindow {
 }
 
 fn layout(area: Rect) -> (Rect, Rc<[Rect]>) {
-    let library_percentage = match area.width {
-        0..150 => 25,
-        150.. => 20,
-    };
     let left_layout = Layout::default()
         .direction(Direction::Horizontal)
-        .constraints(vec![
-            Constraint::Percentage(library_percentage),
-            Constraint::Percentage(100 - library_percentage),
-        ])
+        .constraints(vec![Constraint::Percentage(20), Constraint::Percentage(80)])
         .split(area);
 
     let right_layout = Layout::default()

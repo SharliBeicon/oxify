@@ -73,20 +73,16 @@ impl Popup<'_> {
     }
 
     pub fn handle_events(&self, event_tx: &Sender<OxifyEvent>, terminal_event: &Option<Event>) {
-        if let Some(terminal_event) = terminal_event {
-            if let crossterm::event::Event::Key(key_event) = terminal_event {
-                if key_event.kind == KeyEventKind::Press {
-                    OxifyEvent::send(event_tx, OxifyEvent::ClosePopup);
-                }
+        if let Some(crossterm::event::Event::Key(key_event)) = terminal_event {
+            if key_event.kind == KeyEventKind::Press {
+                OxifyEvent::send(event_tx, OxifyEvent::ClosePopup);
             }
         }
     }
     pub fn handle_toggle_popup(event_tx: &Sender<OxifyEvent>, terminal_event: &Option<Event>) {
-        if let Some(terminal_event) = terminal_event {
-            if let crossterm::event::Event::Key(key_event) = terminal_event {
-                if key_event.kind == KeyEventKind::Press && key_event.code == KeyCode::Char('?') {
-                    OxifyEvent::send(event_tx, OxifyEvent::Popup(help_popup()));
-                }
+        if let Some(crossterm::event::Event::Key(key_event)) = terminal_event {
+            if key_event.kind == KeyEventKind::Press && key_event.code == KeyCode::Char('?') {
+                OxifyEvent::send(event_tx, OxifyEvent::Popup(help_popup()));
             }
         }
     }

@@ -2065,7 +2065,7 @@ dependencies = [
  "librespot",
  "log",
  "open",
- "oxify_derive",
+ "oxify-derive",
  "rand",
  "ratatui",
  "rustls 0.23.16",
@@ -2079,7 +2079,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "oxify_derive"
+name = "oxify-derive"
 version = "0.1.0"
 dependencies = [
  "proc-macro2",

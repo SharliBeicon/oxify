@@ -14,7 +14,7 @@ repository = "https://github.com/sharlibeicon/oxify"
 name = "oxify"
 
 [dependencies]
-oxify_derive = { path = "oxify_derive" }
+oxify-derive = { path = "oxify_derive" }
 base64 = "0.22.1"
 chrono = "0.4.38"
 crossterm = "0.28.1"
@@ -40,5 +40,4 @@ opt-level = 0
 panic = "abort"
 opt-level = 3
 lto = true
-codegen-utils = 1
 strip = true

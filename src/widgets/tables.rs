@@ -11,7 +11,7 @@ use ratatui::{
     Frame,
 };
 
-use crate::model::track_data::{AlbumCollection, TrackCollection};
+use crate::model::track_data::{AlbumCollection, ArtistCollection, TrackCollection};
 
 const ITEM_HEIGHT: usize = 4;
 
@@ -85,6 +85,36 @@ impl From<AlbumCollection> for Vec<AlbumData> {
                 year: album_item.release_date.clone(),
                 num_songs: album_item.total_tracks.to_string(),
                 uri: album_item.uri.to_string(),
+            })
+            .collect()
+    }
+}
+
+#[derive(Debug, Clone, OxifyTable)]
+struct ArtistData {
+    name: String,
+    genre: String,
+    followers: String,
+    #[skip]
+    uri: String,
+}
+
+impl From<ArtistCollection> for Vec<ArtistData> {
+    fn from(value: ArtistCollection) -> Self {
+        value
+            .items
+            .iter()
+            .map(|artist_item| ArtistData {
+                name: artist_item.name.clone(),
+                genre: artist_item
+                    .genres
+                    .iter()
+                    .fold("".to_string(), |acc, next| format! {"{}, {}", acc, next}),
+                followers: artist_item
+                    .followers
+                    .clone()
+                    .map_or_else(|| 0.to_string(), |f| f.total.to_string()),
+                uri: artist_item.uri.clone(),
             })
             .collect()
     }

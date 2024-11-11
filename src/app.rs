@@ -84,9 +84,10 @@ impl App<'_> {
                             .as_ref()
                             .expect("Token not found somehow");
                         match spotify::api::search(token.to_string(), query.to_string()) {
-                            Ok(response) => {
-                                OxifyEvent::send(&event_tx, OxifyEvent::SearchResponse(response))
-                            }
+                            Ok(response) => OxifyEvent::send(
+                                &event_tx,
+                                OxifyEvent::SearchResponse(Box::new(response)),
+                            ),
                             _ => (),
                         }
                     }

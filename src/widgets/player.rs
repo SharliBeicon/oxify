@@ -17,7 +17,7 @@ use crate::{model::track_data::SearchData, Focus, OxifyEvent};
 
 use super::{
     centered_height,
-    tables::{AlbumDataTable, TrackDataTable},
+    tables::{AlbumDataTable, ArtistDataTable, TrackDataTable},
     tabs::SelectedTab,
 };
 
@@ -36,16 +36,19 @@ pub struct SearchFullData {
     pub data: SearchData,
     pub track_table: Option<TrackDataTable>,
     pub album_table: Option<AlbumDataTable>,
+    pub artist_table: Option<ArtistDataTable>,
 }
 
 impl Player {
     pub fn draw(&mut self, frame: &mut Frame, area: Rect) {
         frame.render_widget(self.clone(), area);
         if let Some(search_data) = &mut self.search_data {
-            let (content_area, _) = player_content_layout(area);
-
             let [_, content_area] =
-                Layout::vertical([Constraint::Length(2), Constraint::Min(0)]).areas(content_area);
+                Layout::vertical([Constraint::Length(2), Constraint::Min(0)]).areas(area);
+            let content_area = content_area.inner(Margin {
+                horizontal: 2,
+                vertical: 2,
+            });
             match self.selected_tab {
                 SelectedTab::Tracks => search_data
                     .track_table
@@ -57,7 +60,11 @@ impl Player {
                     .as_mut()
                     .expect("TODO")
                     .draw(frame, content_area),
-                SelectedTab::Artists => (),
+                SelectedTab::Artists => search_data
+                    .artist_table
+                    .as_mut()
+                    .expect("TODO")
+                    .draw(frame, content_area),
                 SelectedTab::Playlists => (),
             }
         }
@@ -125,9 +132,22 @@ impl Player {
                         _ => (),
                     }
                 }
-                SelectedTab::Artists => match key_code {
-                    _ => (),
-                },
+                SelectedTab::Artists => {
+                    let search_data = self.search_data.as_mut().expect("Search data is empty");
+                    match key_code {
+                        KeyCode::Up | KeyCode::Char('k') => {
+                            if let Some(artist_table) = &mut search_data.artist_table {
+                                artist_table.previous_row();
+                            }
+                        }
+                        KeyCode::Down | KeyCode::Char('j') => {
+                            if let Some(artist_table) = &mut search_data.artist_table {
+                                artist_table.next_row();
+                            }
+                        }
+                        _ => (),
+                    }
+                }
                 SelectedTab::Playlists => match key_code {
                     _ => (),
                 },
@@ -209,43 +229,15 @@ impl Widget for Player {
                     .render(area, buf);
             }
             Some(_) => {
-                let (content_area, player_area) = player_content_layout(area);
-
                 let [tabs_area, _] = Layout::vertical([Constraint::Length(1), Constraint::Min(0)])
-                    .areas(content_area);
+                    .areas(area.inner(Margin {
+                        horizontal: 1,
+                        vertical: 2,
+                    }));
 
                 player_block.title(title).render(area, buf);
                 self.render_tabs(tabs_area, buf);
-                Block::default()
-                    .border_set(symbols::border::Set {
-                        top_left: symbols::line::NORMAL.vertical_right,
-                        top_right: symbols::line::NORMAL.vertical_left,
-                        ..symbols::border::PLAIN
-                    })
-                    .borders(Borders::ALL)
-                    .title(
-                        instructions
-                            .clone()
-                            .alignment(Alignment::Right)
-                            .position(Position::Bottom),
-                    )
-                    .render(player_area, buf);
             }
         }
     }
-}
-
-fn player_content_layout(area: Rect) -> (Rect, Rect) {
-    let outer_layout = Layout::default()
-        .direction(Direction::Vertical)
-        .constraints(vec![Constraint::Percentage(85), Constraint::Percentage(15)])
-        .split(area);
-
-    (
-        outer_layout[0].inner(Margin {
-            vertical: 2,
-            horizontal: 2,
-        }),
-        outer_layout[1],
-    )
 }

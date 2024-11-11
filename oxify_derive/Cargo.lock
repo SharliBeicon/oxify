@@ -3,7 +3,7 @@
 version = 3
 
 [[package]]
-name = "oxify_derive"
+name = "oxify-derive"
 version = "0.1.0"
 dependencies = [
  "proc-macro2",

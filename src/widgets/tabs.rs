@@ -4,13 +4,13 @@ use strum::{Display, EnumIter, FromRepr};
 #[derive(Default, Clone, Copy, Display, FromRepr, EnumIter)]
 pub enum SelectedTab {
     #[default]
-    #[strum(to_string = "[T]racks")]
+    #[strum(to_string = "Tracks")]
     Tracks,
-    #[strum(to_string = "[A]lbums")]
+    #[strum(to_string = "Albums")]
     Albums,
-    #[strum(to_string = "A[R]tists")]
+    #[strum(to_string = "Artists")]
     Artists,
-    #[strum(to_string = "[P]laylists")]
+    #[strum(to_string = "Playlists")]
     Playlists,
 }
 

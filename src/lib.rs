@@ -26,7 +26,7 @@ pub enum OxifyEvent {
     Focus(Focus),
     LoginAttempt,
     SearchRequest(String),
-    SearchResponse(SearchData),
+    SearchResponse(Box<SearchData>),
     InputMode(InputMode),
     Popup(Popup<'static>),
     PlayUri(String),
