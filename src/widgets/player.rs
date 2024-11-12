@@ -17,7 +17,7 @@ use crate::{model::track_data::SearchData, Focus, OxifyEvent};
 
 use super::{
     centered_height,
-    tables::{AlbumDataTable, ArtistDataTable, TrackDataTable},
+    tables::{AlbumDataTable, ArtistDataTable, PlaylistDataTable, TrackDataTable},
     tabs::SelectedTab,
 };
 
@@ -37,6 +37,7 @@ pub struct SearchFullData {
     pub track_table: Option<TrackDataTable>,
     pub album_table: Option<AlbumDataTable>,
     pub artist_table: Option<ArtistDataTable>,
+    pub playlist_table: Option<PlaylistDataTable>,
 }
 
 impl Player {
@@ -65,7 +66,11 @@ impl Player {
                     .as_mut()
                     .expect("TODO")
                     .draw(frame, content_area),
-                SelectedTab::Playlists => (),
+                SelectedTab::Playlists => search_data
+                    .playlist_table
+                    .as_mut()
+                    .expect("TODO")
+                    .draw(frame, content_area),
             }
         }
     }
@@ -148,9 +153,22 @@ impl Player {
                         _ => (),
                     }
                 }
-                SelectedTab::Playlists => match key_code {
-                    _ => (),
-                },
+                SelectedTab::Playlists => {
+                    let search_data = self.search_data.as_mut().expect("Search data is empty");
+                    match key_code {
+                        KeyCode::Up | KeyCode::Char('k') => {
+                            if let Some(playlist_table) = &mut search_data.playlist_table {
+                                playlist_table.previous_row();
+                            }
+                        }
+                        KeyCode::Down | KeyCode::Char('j') => {
+                            if let Some(playlist_table) = &mut search_data.playlist_table {
+                                playlist_table.next_row();
+                            }
+                        }
+                        _ => (),
+                    }
+                }
             }
         } else {
             match key_code {

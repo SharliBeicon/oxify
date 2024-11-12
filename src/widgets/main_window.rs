@@ -12,7 +12,7 @@ use super::{
     library::Library,
     player::{Player, SearchFullData},
     search::Search,
-    tables::{AlbumDataTable, ArtistDataTable, TrackDataTable},
+    tables::{AlbumDataTable, ArtistDataTable, PlaylistDataTable, TrackDataTable},
     InputMode,
 };
 
@@ -57,6 +57,7 @@ impl MainWindow {
                         track_table: response.clone().tracks.map(TrackDataTable::new),
                         album_table: response.clone().albums.map(AlbumDataTable::new),
                         artist_table: response.clone().artists.map(ArtistDataTable::new),
+                        playlist_table: response.clone().playlists.map(PlaylistDataTable::new),
                     });
                     self.search.reset_cursor();
                     if let Some(event_tx) = &self.event_tx {

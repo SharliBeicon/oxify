@@ -24,7 +24,22 @@ pub fn oxify_tab_derive(input: TokenStream) -> TokenStream {
         .filter_map(|field| {
             let skip_attr = field.attrs.iter().any(|attr| attr.path().is_ident("skip"));
             if !skip_attr {
-                Some(field.ident.as_ref().unwrap().to_string())
+                field.ident.as_ref().map(|id| {
+                    id.to_string()
+                        .replace("_", " ")
+                        .split_whitespace()
+                        .map(|word| {
+                            let mut chars = word.chars();
+                            match chars.next() {
+                                Some(first) => {
+                                    first.to_uppercase().collect::<String>() + chars.as_str()
+                                }
+                                None => String::new(),
+                            }
+                        })
+                        .collect::<Vec<String>>()
+                        .join(" ")
+                })
             } else {
                 None
             }
@@ -134,12 +149,7 @@ pub fn oxify_tab_derive(input: TokenStream) -> TokenStream {
                 let bar = " █ ";
                 let t = Table::new(
                     rows,
-                    [
-                        Constraint::Percentage(30),
-                        Constraint::Percentage(30),
-                        Constraint::Percentage(25),
-                        Constraint::Percentage(15),
-                    ],
+                    generate_constraint_vector(#table_name::field_names().len()),
                 )
                 .header(header)
                 .highlight_style(selected_row_style)

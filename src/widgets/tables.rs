@@ -11,9 +11,25 @@ use ratatui::{
     Frame,
 };
 
-use crate::model::track_data::{AlbumCollection, ArtistCollection, TrackCollection};
+use crate::model::track_data::{
+    AlbumCollection, ArtistCollection, PlaylistCollection, TrackCollection,
+};
 
 const ITEM_HEIGHT: usize = 4;
+
+fn generate_constraint_vector(len: usize) -> Vec<Constraint> {
+    let percentage = 100 / len as u16;
+    (0..len)
+        .map(|_| Constraint::Percentage(percentage))
+        .collect()
+}
+
+fn millis_to_mm_ss(milliseconds: u32) -> String {
+    let seconds = milliseconds / 1000;
+    let minutes = seconds / 60;
+    let remaining_seconds = seconds % 60;
+    format!("{:02}:{:02}", minutes, remaining_seconds)
+}
 
 #[derive(Debug, Clone)]
 struct TableColors {
@@ -69,7 +85,7 @@ struct AlbumData {
     name: String,
     artist: String,
     year: String,
-    num_songs: String,
+    num_tracks: String,
     #[skip]
     uri: String,
 }
@@ -83,7 +99,7 @@ impl From<AlbumCollection> for Vec<AlbumData> {
                 name: album_item.name.clone(),
                 artist: album_item.artists[0].name.clone(),
                 year: album_item.release_date.clone(),
-                num_songs: album_item.total_tracks.to_string(),
+                num_tracks: album_item.total_tracks.to_string(),
                 uri: album_item.uri.to_string(),
             })
             .collect()
@@ -109,7 +125,16 @@ impl From<ArtistCollection> for Vec<ArtistData> {
                 genre: artist_item
                     .genres
                     .iter()
-                    .fold("".to_string(), |acc, next| format! {"{}, {}", acc, next}),
+                    .map(|word| {
+                        let mut chars = word.chars();
+                        chars
+                            .next()
+                            .map(|c| c.to_uppercase().collect::<String>())
+                            .unwrap_or_default()
+                            + chars.as_str()
+                    })
+                    .collect::<Vec<String>>()
+                    .join(", "),
                 followers: artist_item
                     .followers
                     .clone()
@@ -120,9 +145,26 @@ impl From<ArtistCollection> for Vec<ArtistData> {
     }
 }
 
-fn millis_to_mm_ss(milliseconds: u32) -> String {
-    let seconds = milliseconds / 1000;
-    let minutes = seconds / 60;
-    let remaining_seconds = seconds % 60;
-    format!("{:02}:{:02}", minutes, remaining_seconds)
+#[derive(Debug, Clone, OxifyTable)]
+struct PlaylistData {
+    name: String,
+    description: String,
+    num_tracks: String,
+    #[skip]
+    uri: String,
+}
+
+impl From<PlaylistCollection> for Vec<PlaylistData> {
+    fn from(value: PlaylistCollection) -> Self {
+        value
+            .items
+            .iter()
+            .map(|playlist_item| PlaylistData {
+                name: playlist_item.name.clone(),
+                description: playlist_item.description.clone(),
+                num_tracks: playlist_item.tracks.total.to_string(),
+                uri: playlist_item.uri.clone(),
+            })
+            .collect()
+    }
 }
