@@ -5,6 +5,7 @@ use std::{
 
 use model::track_data::SearchData;
 use ratatui::layout::{Constraint, Flex, Layout, Rect};
+use tokio::sync::broadcast;
 use widgets::{popup::Popup, InputMode};
 
 pub mod app;
@@ -20,6 +21,19 @@ pub static AGENT: LazyLock<ureq::Agent> = LazyLock::new(|| {
         .build()
 });
 
+#[derive(Clone, Debug)]
+pub enum OxifyPlayerEvent {
+    PlayTrack(String),
+}
+
+impl OxifyPlayerEvent {
+    pub fn send(tx: &broadcast::Sender<Self>, event: Self) {
+        if let Err(err) = tx.send(event) {
+            log::error!("Cannot send event to main app: {err}")
+        }
+    }
+}
+
 #[derive(Debug)]
 pub enum OxifyEvent {
     Exit,
@@ -29,8 +43,8 @@ pub enum OxifyEvent {
     SearchResponse(Box<SearchData>),
     InputMode(InputMode),
     Popup(Popup<'static>),
-    PlayUri(String),
     ClosePopup,
+    ActiveBackend(bool),
 }
 
 impl OxifyEvent {

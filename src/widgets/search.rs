@@ -22,7 +22,7 @@ pub struct Search {
     pub character_index: usize,
     pub focused: bool,
     pub input_mode: InputMode,
-    pub event_tx: Option<Sender<OxifyEvent>>,
+    pub oe_tx: Option<Sender<OxifyEvent>>,
 }
 
 impl Search {
@@ -81,8 +81,8 @@ impl Search {
     }
 
     pub fn handle_events(&mut self, key_code: &KeyCode) {
-        let event_tx = self
-            .event_tx
+        let oe_tx = self
+            .oe_tx
             .clone()
             .expect("Event sender not initialized somehow");
         if self.focused {
@@ -92,16 +92,16 @@ impl Search {
                     KeyCode::Right | KeyCode::Char('l') => self.move_cursor_right(),
                     KeyCode::Backspace => self.move_cursor_left(),
                     KeyCode::Char('i') => {
-                        OxifyEvent::send(&event_tx, OxifyEvent::InputMode(InputMode::Insert))
+                        OxifyEvent::send(&oe_tx, OxifyEvent::InputMode(InputMode::Insert))
                     }
                     _ => {}
                 }
             } else {
                 match key_code {
                     KeyCode::Esc => {
-                        OxifyEvent::send(&event_tx, OxifyEvent::InputMode(InputMode::Normal))
+                        OxifyEvent::send(&oe_tx, OxifyEvent::InputMode(InputMode::Normal))
                     }
-                    KeyCode::Enter => OxifyEvent::send(&event_tx, self.submit_message()),
+                    KeyCode::Enter => OxifyEvent::send(&oe_tx, self.submit_message()),
                     KeyCode::Backspace => self.delete_char(),
                     KeyCode::Char(to_insert) => self.enter_char(*to_insert),
                     _ => (),
@@ -109,7 +109,7 @@ impl Search {
             }
         } else {
             match key_code {
-                KeyCode::Char('1') => OxifyEvent::send(&event_tx, OxifyEvent::Focus(Focus::Search)),
+                KeyCode::Char('1') => OxifyEvent::send(&oe_tx, OxifyEvent::Focus(Focus::Search)),
                 _ => (),
             }
         }

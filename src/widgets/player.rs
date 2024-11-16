@@ -12,8 +12,9 @@ use ratatui::{
     },
 };
 use style::palette::tailwind;
+use tokio::sync::broadcast;
 
-use crate::{model::track_data::SearchData, Focus, OxifyEvent};
+use crate::{model::track_data::SearchData, Focus, OxifyEvent, OxifyPlayerEvent};
 
 use super::{
     centered_height,
@@ -26,7 +27,8 @@ pub struct Player {
     pub username: String,
     pub focused: bool,
     pub search_data: Option<SearchFullData>,
-    pub event_tx: Option<Sender<OxifyEvent>>,
+    pub oe_tx: Option<Sender<OxifyEvent>>,
+    pub ope_tx: Option<broadcast::Sender<OxifyPlayerEvent>>,
 
     pub selected_tab: SelectedTab,
 }
@@ -76,8 +78,8 @@ impl Player {
     }
 
     pub fn handle_events(&mut self, key_code: &KeyCode) {
-        let event_tx = self
-            .event_tx
+        let oe_tx = self
+            .oe_tx
             .clone()
             .expect("Event sender not initialized somehow");
         if self.focused {
@@ -110,11 +112,14 @@ impl Player {
                         KeyCode::Enter => {
                             if let Some(track_table) = &mut search_data.track_table {
                                 if let Some(uri) = track_table.selected_uri() {
-                                    let event_tx = self
-                                        .event_tx
+                                    let ope_tx = self
+                                        .ope_tx
                                         .as_ref()
-                                        .expect("Event sender not initialized");
-                                    OxifyEvent::send(&event_tx, OxifyEvent::PlayUri(uri));
+                                        .expect("Player event sender not initialized");
+                                    OxifyPlayerEvent::send(
+                                        &ope_tx,
+                                        OxifyPlayerEvent::PlayTrack(uri),
+                                    );
                                 }
                             }
                         }
@@ -173,7 +178,7 @@ impl Player {
         } else {
             match key_code {
                 KeyCode::Char('3') => {
-                    if let Err(err) = event_tx.send(OxifyEvent::Focus(Focus::Player)) {
+                    if let Err(err) = oe_tx.send(OxifyEvent::Focus(Focus::Player)) {
                         log::error!("Cannot send event to main app: {err}")
                     }
                 }

@@ -16,7 +16,7 @@ use crate::{Focus, OxifyEvent};
 #[derive(Debug, Default, Clone)]
 pub struct Library {
     pub focused: bool,
-    pub event_tx: Option<Sender<OxifyEvent>>,
+    pub oe_tx: Option<Sender<OxifyEvent>>,
 }
 
 impl Library {
@@ -24,8 +24,8 @@ impl Library {
         frame.render_widget(self.clone(), area);
     }
     pub fn handle_events(&self, key_code: &KeyCode) {
-        let event_tx = self
-            .event_tx
+        let oe_tx = self
+            .oe_tx
             .clone()
             .expect("Event sender not initialized somehow");
         if self.focused {
@@ -35,7 +35,7 @@ impl Library {
         } else {
             match key_code {
                 KeyCode::Char('2') => {
-                    if let Err(err) = event_tx.send(OxifyEvent::Focus(Focus::Library)) {
+                    if let Err(err) = oe_tx.send(OxifyEvent::Focus(Focus::Library)) {
                         log::error!("Cannot send event to main app: {err}")
                     }
                 }

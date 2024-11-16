@@ -1,24 +1,20 @@
-use std::{
-    io,
-    sync::{mpsc, Arc},
-};
+use std::{io, sync::mpsc};
 
 use crossterm::event::Event as TerminalEvent;
 use ratatui::DefaultTerminal;
-use tokio::sync::RwLock;
 
 use crate::{
     auth::{AuthState, LoginState},
     spotify::{self, backend::Backend},
     widgets::{await_login::AwaitLogin, landing::Landing, main_window::MainWindow, popup::Popup},
-    OxifyEvent,
+    OxifyEvent, OxifyPlayerEvent,
 };
 
 pub struct App<'a> {
     exit: bool,
+    active_backend: bool,
     auth_state: AuthState,
     active_popup: Option<Popup<'a>>,
-    backend: Option<Arc<RwLock<Backend>>>,
 
     // Screens
     landing: Landing,
@@ -38,7 +34,7 @@ impl App<'_> {
             exit: false,
             auth_state: AuthState::default(),
             active_popup: None,
-            backend: None,
+            active_backend: false,
             landing: Landing::default(),
             await_login: AwaitLogin::default(),
             main_window: MainWindow::default(),
@@ -48,12 +44,13 @@ impl App<'_> {
     pub async fn run(&mut self, terminal: &mut DefaultTerminal) -> io::Result<()> {
         let (auth_tx, auth_rx) = mpsc::channel::<AuthState>();
         let (event_tx, event_rx) = mpsc::channel::<OxifyEvent>();
+        let (ope_tx, _) = tokio::sync::broadcast::channel::<OxifyPlayerEvent>(2048);
 
         self.landing.auth_tx = Some(auth_tx.clone());
         self.landing.event_tx = Some(event_tx.clone());
         self.await_login.event_tx = Some(event_tx.clone());
-        self.main_window.set_event_sender(event_tx.clone());
-
+        self.main_window
+            .set_senders(event_tx.clone(), ope_tx.clone());
         terminal.draw(|frame| self.landing.draw(frame))?;
         while !self.exit {
             // Try to update auth state
@@ -91,13 +88,7 @@ impl App<'_> {
                             _ => (),
                         }
                     }
-                    OxifyEvent::PlayUri(uri) => {
-                        let self_backend_clone = self.backend.clone();
-                        if let Some(backend) = self_backend_clone {
-                            let uri = uri.clone();
-                            tokio::spawn(async move { backend.read().await.play_uri(uri).await });
-                        }
-                    }
+                    OxifyEvent::ActiveBackend(is_active) => self.active_backend = *is_active,
                     _ => (),
                 }
             }
@@ -126,10 +117,11 @@ impl App<'_> {
                     }
 
                     //Load backend session on login
-                    if self.backend.is_none() {
-                        self.backend = Some(Arc::new(RwLock::new(Backend::new(
-                            spotify::api::get_backend_session(access_token.clone()).await?,
-                        ))));
+                    if !self.active_backend {
+                        let ope_tx = ope_tx.clone();
+                        let event_tx = event_tx.clone();
+                        tokio::spawn(Backend::run(access_token.clone(), ope_tx, event_tx));
+                        self.active_backend = true;
                     }
 
                     self.main_window

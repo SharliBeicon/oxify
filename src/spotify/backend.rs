@@ -1,7 +1,7 @@
-use std::sync::Arc;
+use std::sync::mpsc;
 
 use librespot::{
-    core::{spotify_id::SpotifyItemType, Session, SpotifyId},
+    core::SpotifyId,
     playback::{
         audio_backend::BACKENDS,
         config::{AudioFormat, PlayerConfig},
@@ -10,40 +10,53 @@ use librespot::{
     },
 };
 
-pub struct Backend {
-    player: Arc<Player>,
-}
+use crate::{OxifyEvent, OxifyPlayerEvent};
+
+pub struct Backend {}
 
 impl Backend {
-    pub fn new(session: Session) -> Self {
-        Self {
-            player: Player::new(
-                PlayerConfig::default(),
-                session,
-                (MIXERS[0].1)(MixerConfig::default()).get_soft_volume(),
-                move || (BACKENDS[0].1)(None, AudioFormat::default()),
-            ),
-        }
-    }
-    pub async fn play_uri(&self, uri: String) {
-        let spotify_id = match SpotifyId::from_uri(&uri) {
-            Ok(spotify_id) => spotify_id,
-            Err(err) => {
-                log::error!("Can't get uri: {err}");
+    pub async fn run(
+        access_token: String,
+        ope_tx: tokio::sync::broadcast::Sender<OxifyPlayerEvent>,
+        oe_tx: mpsc::Sender<OxifyEvent>,
+    ) {
+        let session = match crate::spotify::api::get_backend_session(access_token.clone()).await {
+            Ok(session) => session,
+            Err(_) => {
+                log::error!("Failing when creating a new backend session");
+                OxifyEvent::send(&oe_tx, OxifyEvent::ActiveBackend(false));
                 return;
             }
         };
+        log::info!("New backend session created");
 
-        match spotify_id.item_type {
-            SpotifyItemType::Track => self.player.load(spotify_id, true, 0),
-            _ => {
-                log::error!("Unsuported spotify id format");
-                return;
+        let player = Player::new(
+            PlayerConfig::default(),
+            session,
+            (MIXERS[0].1)(MixerConfig::default()).get_soft_volume(),
+            move || (BACKENDS[0].1)(None, AudioFormat::default()),
+        );
+        log::info!("Player attached to session");
+
+        let mut ope_rx = ope_tx.subscribe();
+
+        log::info!("Handling player events");
+        while let Ok(event) = ope_rx.recv().await {
+            match event {
+                OxifyPlayerEvent::PlayTrack(uri) => {
+                    let spotify_id = match SpotifyId::from_uri(&uri) {
+                        Ok(spotify_id) => spotify_id,
+                        Err(err) => {
+                            log::error!("Can't get uri: {err}");
+                            continue;
+                        }
+                    };
+
+                    player.load(spotify_id, true, 0);
+                }
             }
         }
 
-        let mut rx = self.player.get_player_event_channel();
-
-        while let Some(_event) = rx.recv().await {}
+        OxifyEvent::send(&oe_tx, OxifyEvent::ActiveBackend(false));
     }
 }

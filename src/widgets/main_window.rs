@@ -5,8 +5,9 @@ use ratatui::{
     layout::{Constraint, Direction, Layout, Position, Rect},
     Frame,
 };
+use tokio::sync::broadcast;
 
-use crate::{model::user_profile::UserProfile, Focus, OxifyEvent};
+use crate::{model::user_profile::UserProfile, Focus, OxifyEvent, OxifyPlayerEvent};
 
 use super::{
     library::Library,
@@ -21,17 +22,23 @@ pub struct MainWindow {
     player: Player,
     library: Library,
     search: Search,
-    event_tx: Option<Sender<OxifyEvent>>,
+    oe_tx: Option<Sender<OxifyEvent>>,
 
     pub user_profile: Option<UserProfile>,
 }
 
 impl MainWindow {
-    pub fn set_event_sender(&mut self, tx: Sender<OxifyEvent>) {
-        self.event_tx = Some(tx.clone());
-        self.player.event_tx = Some(tx.clone());
-        self.library.event_tx = Some(tx.clone());
-        self.search.event_tx = Some(tx.clone());
+    pub fn set_senders(
+        &mut self,
+        oe_tx: Sender<OxifyEvent>,
+        ope_tx: broadcast::Sender<OxifyPlayerEvent>,
+    ) {
+        self.oe_tx = Some(oe_tx.clone());
+        self.player.oe_tx = Some(oe_tx.clone());
+        self.library.oe_tx = Some(oe_tx.clone());
+        self.search.oe_tx = Some(oe_tx.clone());
+
+        self.player.ope_tx = Some(ope_tx.clone());
     }
 
     fn draw_input(&self, frame: &mut Frame, area: Rect) {
@@ -60,8 +67,8 @@ impl MainWindow {
                         playlist_table: response.clone().playlists.map(PlaylistDataTable::new),
                     });
                     self.search.reset_cursor();
-                    if let Some(event_tx) = &self.event_tx {
-                        OxifyEvent::send(event_tx, OxifyEvent::Focus(Focus::Player));
+                    if let Some(oe_tx) = &self.oe_tx {
+                        OxifyEvent::send(oe_tx, OxifyEvent::Focus(Focus::Player));
                     }
                 }
                 _ => (),
@@ -70,8 +77,8 @@ impl MainWindow {
         if let Some(terminal_event) = terminal_event {
             if let crossterm::event::Event::Key(key_event) = terminal_event {
                 if key_event.kind == KeyEventKind::Press {
-                    let event_tx = self
-                        .event_tx
+                    let oe_tx = self
+                        .oe_tx
                         .clone()
                         .expect("Event sender not initialized somehow");
                     match key_event.code {
@@ -83,7 +90,7 @@ impl MainWindow {
                             }
                         }
                         KeyCode::Char('q') => {
-                            if let Err(err) = event_tx.send(OxifyEvent::Exit) {
+                            if let Err(err) = oe_tx.send(OxifyEvent::Exit) {
                                 log::error!("Cannot send event to main app: {err}")
                             }
                         }
