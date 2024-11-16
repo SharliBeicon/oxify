@@ -1,5 +1,4 @@
-use std::sync::mpsc::Sender;
-
+use crate::{resize_area, OxifyEvent};
 use crossterm::event::{Event, KeyCode, KeyEventKind};
 use derive_setters::Setters;
 use ratatui::{
@@ -13,8 +12,7 @@ use ratatui::{
     },
     Frame,
 };
-
-use crate::{resize_area, OxifyEvent};
+use std::sync::mpsc::Sender;
 
 #[derive(Debug, Default, Clone)]
 pub enum PopupKind {
@@ -42,21 +40,12 @@ struct PopupStyle {
 impl From<&PopupKind> for PopupStyle {
     fn from(value: &PopupKind) -> Self {
         match value {
-            _ => PopupStyle {
+            PopupKind::Info => PopupStyle {
                 title_style: Style::new().black(),
                 border_style: Style::new().black(),
                 style: Style::new().on_light_blue().black(),
             },
-            //PopupKind::Error => PopupStyle {
-            //    title_style: todo!(),
-            //    border_style: todo!(),
-            //    style: todo!(),
-            //},
-            //PopupKind::Warning => PopupStyle {
-            //    title_style: todo!(),
-            //    border_style: todo!(),
-            //    style: todo!(),
-            //},
+            _ => todo!(),
         }
     }
 }

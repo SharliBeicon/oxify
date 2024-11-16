@@ -1,9 +1,8 @@
-use std::io;
-
 use super::AuthState;
 use crate::AGENT;
 use base64::prelude::*;
 use serde::Deserialize;
+use std::io;
 use ureq::Response;
 
 #[allow(dead_code)]

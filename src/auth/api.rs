@@ -1,9 +1,3 @@
-use std::{
-    sync::mpsc::{channel, Sender},
-    thread,
-    time::Duration,
-};
-
 use super::{
     client::{self, refresh_token},
     config::Config,
@@ -11,6 +5,11 @@ use super::{
 };
 use crate::auth::AuthState;
 use rand::distributions::{Alphanumeric, DistString};
+use std::{
+    sync::mpsc::{channel, Sender},
+    thread,
+    time::Duration,
+};
 
 const ONE_MINUTE: i32 = 60;
 

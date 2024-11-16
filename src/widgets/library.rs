@@ -1,5 +1,4 @@
-use std::sync::mpsc::Sender;
-
+use crate::{Focus, OxifyEvent};
 use crossterm::event::KeyCode;
 use ratatui::{
     buffer::Buffer,
@@ -10,8 +9,7 @@ use ratatui::{
     widgets::{block::Title, Block, Borders, Widget},
     Frame,
 };
-
-use crate::{Focus, OxifyEvent};
+use std::sync::mpsc::Sender;
 
 #[derive(Debug, Default, Clone)]
 pub struct Library {
@@ -29,9 +27,7 @@ impl Library {
             .clone()
             .expect("Event sender not initialized somehow");
         if self.focused {
-            match key_code {
-                _ => (),
-            }
+            todo!();
         } else {
             match key_code {
                 KeyCode::Char('2') => {
@@ -39,7 +35,7 @@ impl Library {
                         log::error!("Cannot send event to main app: {err}")
                     }
                 }
-                _ => (),
+                _ => todo!(),
             }
         }
     }

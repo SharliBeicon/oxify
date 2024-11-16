@@ -1,14 +1,12 @@
-use std::{io, sync::mpsc};
-
-use crossterm::event::Event as TerminalEvent;
-use ratatui::DefaultTerminal;
-
 use crate::{
     auth::{AuthState, LoginState},
-    spotify::{self, backend::Backend},
+    spotify::{self, backend},
     widgets::{await_login::AwaitLogin, landing::Landing, main_window::MainWindow, popup::Popup},
     OxifyEvent, OxifyPlayerEvent,
 };
+use crossterm::event::Event as TerminalEvent;
+use ratatui::DefaultTerminal;
+use std::{io, sync::mpsc};
 
 pub struct App<'a> {
     exit: bool,
@@ -80,12 +78,13 @@ impl App<'_> {
                             .access_token
                             .as_ref()
                             .expect("Token not found somehow");
-                        match spotify::api::search(token.to_string(), query.to_string()) {
-                            Ok(response) => OxifyEvent::send(
+                        if let Ok(response) =
+                            spotify::api::search(token.to_string(), query.to_string())
+                        {
+                            OxifyEvent::send(
                                 &event_tx,
                                 OxifyEvent::SearchResponse(Box::new(response)),
-                            ),
-                            _ => (),
+                            );
                         }
                     }
                     OxifyEvent::ActiveBackend(is_active) => self.active_backend = *is_active,
@@ -120,7 +119,7 @@ impl App<'_> {
                     if !self.active_backend {
                         let ope_tx = ope_tx.clone();
                         let event_tx = event_tx.clone();
-                        tokio::spawn(Backend::run(access_token.clone(), ope_tx, event_tx));
+                        tokio::spawn(backend::run(access_token.clone(), ope_tx, event_tx));
                         self.active_backend = true;
                     }
 

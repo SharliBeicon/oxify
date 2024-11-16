@@ -1,5 +1,5 @@
-use std::sync::mpsc::Sender;
-
+use super::centered_height;
+use crate::OxifyEvent;
 use crossterm::event::{Event, KeyCode, KeyEventKind};
 use ratatui::{
     buffer::Buffer,
@@ -13,10 +13,8 @@ use ratatui::{
     },
     Frame,
 };
+use std::sync::mpsc::Sender;
 
-use crate::OxifyEvent;
-
-use super::centered_height;
 #[derive(Debug, Default, Clone)]
 pub struct AwaitLogin {
     pub event_tx: Option<Sender<OxifyEvent>>,

@@ -1,14 +1,3 @@
-use std::{rc::Rc, sync::mpsc::Sender};
-
-use crossterm::event::{Event as TerminalEvent, KeyCode, KeyEventKind};
-use ratatui::{
-    layout::{Constraint, Direction, Layout, Position, Rect},
-    Frame,
-};
-use tokio::sync::broadcast;
-
-use crate::{model::user_profile::UserProfile, Focus, OxifyEvent, OxifyPlayerEvent};
-
 use super::{
     library::Library,
     player::{Player, SearchFullData},
@@ -16,6 +5,14 @@ use super::{
     tables::{AlbumDataTable, ArtistDataTable, PlaylistDataTable, TrackDataTable},
     InputMode,
 };
+use crate::{model::user_profile::UserProfile, Focus, OxifyEvent, OxifyPlayerEvent};
+use crossterm::event::{Event as TerminalEvent, KeyCode, KeyEventKind};
+use ratatui::{
+    layout::{Constraint, Direction, Layout, Position, Rect},
+    Frame,
+};
+use std::{rc::Rc, sync::mpsc::Sender};
+use tokio::sync::broadcast;
 
 #[derive(Default)]
 pub struct MainWindow {
@@ -74,34 +71,32 @@ impl MainWindow {
                 _ => (),
             }
         }
-        if let Some(terminal_event) = terminal_event {
-            if let crossterm::event::Event::Key(key_event) = terminal_event {
-                if key_event.kind == KeyEventKind::Press {
-                    let oe_tx = self
-                        .oe_tx
-                        .clone()
-                        .expect("Event sender not initialized somehow");
-                    match key_event.code {
-                        KeyCode::Esc => {
-                            if self.search.input_mode != InputMode::Insert {
-                                self.set_focus(&Focus::None)
-                            } else {
-                                self.search.handle_events(&key_event.code);
-                            }
+        if let Some(crossterm::event::Event::Key(key_event)) = terminal_event {
+            if key_event.kind == KeyEventKind::Press {
+                let oe_tx = self
+                    .oe_tx
+                    .clone()
+                    .expect("Event sender not initialized somehow");
+                match key_event.code {
+                    KeyCode::Esc => {
+                        if self.search.input_mode != InputMode::Insert {
+                            self.set_focus(&Focus::None)
+                        } else {
+                            self.search.handle_events(&key_event.code);
                         }
-                        KeyCode::Char('q') => {
-                            if let Err(err) = oe_tx.send(OxifyEvent::Exit) {
-                                log::error!("Cannot send event to main app: {err}")
-                            }
+                    }
+                    KeyCode::Char('q') => {
+                        if let Err(err) = oe_tx.send(OxifyEvent::Exit) {
+                            log::error!("Cannot send event to main app: {err}")
                         }
-                        _ => {
-                            if self.search.input_mode == InputMode::Normal {
-                                self.search.handle_events(&key_event.code);
-                                self.library.handle_events(&key_event.code);
-                                self.player.handle_events(&key_event.code);
-                            } else {
-                                self.search.handle_events(&key_event.code);
-                            }
+                    }
+                    _ => {
+                        if self.search.input_mode == InputMode::Normal {
+                            self.search.handle_events(&key_event.code);
+                            self.library.handle_events(&key_event.code);
+                            self.player.handle_events(&key_event.code);
+                        } else {
+                            self.search.handle_events(&key_event.code);
                         }
                     }
                 }

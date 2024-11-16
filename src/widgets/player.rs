@@ -1,6 +1,12 @@
 use std::sync::mpsc::Sender;
 use strum::IntoEnumIterator;
 
+use super::{
+    centered_height,
+    tables::{AlbumDataTable, ArtistDataTable, PlaylistDataTable, TrackDataTable},
+    tabs::SelectedTab,
+};
+use crate::{model::track_data::SearchData, Focus, OxifyEvent, OxifyPlayerEvent};
 use crossterm::event::KeyCode;
 use ratatui::{
     buffer::Buffer,
@@ -13,14 +19,6 @@ use ratatui::{
 };
 use style::palette::tailwind;
 use tokio::sync::broadcast;
-
-use crate::{model::track_data::SearchData, Focus, OxifyEvent, OxifyPlayerEvent};
-
-use super::{
-    centered_height,
-    tables::{AlbumDataTable, ArtistDataTable, PlaylistDataTable, TrackDataTable},
-    tabs::SelectedTab,
-};
 
 #[derive(Default, Clone)]
 pub struct Player {
@@ -117,7 +115,7 @@ impl Player {
                                         .as_ref()
                                         .expect("Player event sender not initialized");
                                     OxifyPlayerEvent::send(
-                                        &ope_tx,
+                                        ope_tx,
                                         OxifyPlayerEvent::PlayTrack(uri),
                                     );
                                 }
@@ -182,7 +180,7 @@ impl Player {
                         log::error!("Cannot send event to main app: {err}")
                     }
                 }
-                _ => (),
+                _ => todo!(),
             }
         }
     }

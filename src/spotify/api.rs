@@ -1,11 +1,10 @@
-use librespot::{
-    core::{Session, SessionConfig},
-    discovery::Credentials,
-};
-
 use crate::{
     model::{track_data::SearchData, user_profile::UserProfile},
     AGENT,
+};
+use librespot::{
+    core::{Session, SessionConfig},
+    discovery::Credentials,
 };
 use std::io::{self, ErrorKind};
 

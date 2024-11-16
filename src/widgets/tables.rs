@@ -1,3 +1,6 @@
+use crate::model::track_data::{
+    AlbumCollection, ArtistCollection, PlaylistCollection, TrackCollection,
+};
 use oxify_derive::OxifyTable;
 use ratatui::{
     layout::{Constraint, Rect},
@@ -9,10 +12,6 @@ use ratatui::{
         TableState,
     },
     Frame,
-};
-
-use crate::model::track_data::{
-    AlbumCollection, ArtistCollection, PlaylistCollection, TrackCollection,
 };
 
 const ITEM_HEIGHT: usize = 4;

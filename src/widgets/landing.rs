@@ -1,5 +1,5 @@
-use std::sync::mpsc::Sender;
-
+use super::centered_height;
+use crate::{auth, OxifyEvent};
 use crossterm::event::{Event, KeyCode, KeyEventKind};
 use ratatui::{
     buffer::Buffer,
@@ -13,10 +13,7 @@ use ratatui::{
     },
     Frame,
 };
-
-use crate::{auth, OxifyEvent};
-
-use super::centered_height;
+use std::sync::mpsc::Sender;
 
 #[derive(Debug, Default, Clone)]
 pub struct Landing {

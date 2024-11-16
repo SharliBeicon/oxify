@@ -1,5 +1,5 @@
-use std::sync::mpsc::Sender;
-
+use super::InputMode;
+use crate::{Focus, OxifyEvent};
 use crossterm::event::KeyCode;
 use ratatui::{
     buffer::Buffer,
@@ -11,10 +11,7 @@ use ratatui::{
     widgets::{block::Title, Block, Borders, Paragraph, Widget},
     Frame,
 };
-
-use crate::{Focus, OxifyEvent};
-
-use super::InputMode;
+use std::sync::mpsc::Sender;
 
 #[derive(Debug, Default, Clone)]
 pub struct Search {
@@ -107,11 +104,8 @@ impl Search {
                     _ => (),
                 }
             }
-        } else {
-            match key_code {
-                KeyCode::Char('1') => OxifyEvent::send(&oe_tx, OxifyEvent::Focus(Focus::Search)),
-                _ => (),
-            }
+        } else if let KeyCode::Char('1') = key_code {
+            OxifyEvent::send(&oe_tx, OxifyEvent::Focus(Focus::Search));
         }
     }
 }
