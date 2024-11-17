@@ -61,6 +61,7 @@ pub enum Focus {
     Search,
     Library,
     Player,
+    Content,
     #[default]
     None,
 }

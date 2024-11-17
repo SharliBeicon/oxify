@@ -5,6 +5,7 @@ use ratatui::{
     layout::{Alignment, Rect},
     prelude::Stylize,
     style::{Color, Style},
+    symbols,
     text::Line,
     widgets::{block::Title, Block, Borders, Widget},
     Frame,
@@ -43,6 +44,10 @@ impl Widget for Library {
         let title: Title;
         let mut block = Block::bordered();
 
+        let border_set = symbols::border::Set {
+            bottom_left: symbols::line::NORMAL.vertical_right,
+            ..symbols::border::PLAIN
+        };
         if !self.focused {
             title = Title::from(Line::from(vec![" [2] ".blue().bold(), "Library ".bold()]));
             style = Style::default();
@@ -57,6 +62,7 @@ impl Widget for Library {
 
         block
             .title(title.alignment(Alignment::Left))
+            .border_set(border_set)
             .style(style)
             .render(area, buf);
     }

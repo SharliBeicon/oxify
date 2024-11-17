@@ -1,6 +1,7 @@
 use super::{
+    content::{Content, SearchFullData},
     library::Library,
-    player::{Player, SearchFullData},
+    player::Player,
     search::Search,
     tables::{AlbumDataTable, ArtistDataTable, PlaylistDataTable, TrackDataTable},
     InputMode,
@@ -16,11 +17,11 @@ use tokio::sync::broadcast;
 
 #[derive(Default)]
 pub struct MainWindow {
-    player: Player,
+    content: Content,
     library: Library,
     search: Search,
+    player: Player,
     oe_tx: Option<Sender<OxifyEvent>>,
-
     pub user_profile: Option<UserProfile>,
 }
 
@@ -31,11 +32,11 @@ impl MainWindow {
         ope_tx: broadcast::Sender<OxifyPlayerEvent>,
     ) {
         self.oe_tx = Some(oe_tx.clone());
-        self.player.oe_tx = Some(oe_tx.clone());
+        self.content.oe_tx = Some(oe_tx.clone());
         self.library.oe_tx = Some(oe_tx.clone());
         self.search.oe_tx = Some(oe_tx.clone());
 
-        self.player.ope_tx = Some(ope_tx.clone());
+        self.content.ope_tx = Some(ope_tx.clone());
     }
 
     fn draw_input(&self, frame: &mut Frame, area: Rect) {
@@ -56,7 +57,7 @@ impl MainWindow {
                 OxifyEvent::Focus(focus) => self.set_focus(focus),
                 OxifyEvent::InputMode(input_mode) => self.search.input_mode = *input_mode,
                 OxifyEvent::SearchResponse(response) => {
-                    self.player.search_data = Some(SearchFullData {
+                    self.content.search_data = Some(SearchFullData {
                         data: *response.clone(),
                         track_table: response.clone().tracks.map(TrackDataTable::new),
                         album_table: response.clone().albums.map(AlbumDataTable::new),
@@ -94,7 +95,7 @@ impl MainWindow {
                         if self.search.input_mode == InputMode::Normal {
                             self.search.handle_events(&key_event.code);
                             self.library.handle_events(&key_event.code);
-                            self.player.handle_events(&key_event.code);
+                            self.content.handle_events(&key_event.code);
                         } else {
                             self.search.handle_events(&key_event.code);
                         }
@@ -105,19 +106,20 @@ impl MainWindow {
     }
 
     pub fn draw(&mut self, frame: &mut Frame) {
-        self.player.username = self
+        self.content.username = self
             .user_profile
             .as_ref()
             .map_or_else(|| "".to_string(), |up| up.display_name.clone());
 
-        let (library_area, search_and_player_area) = layout(frame.area());
+        let (library_area, search_and_content_area, player_area) = layout(frame.area());
 
         self.library.draw(frame, library_area);
         self.search
             .focused
-            .then(|| self.draw_input(frame, search_and_player_area[0]));
-        self.search.draw(frame, search_and_player_area[0]);
-        self.player.draw(frame, search_and_player_area[1]);
+            .then(|| self.draw_input(frame, search_and_content_area[0]));
+        self.search.draw(frame, search_and_content_area[0]);
+        self.content.draw(frame, search_and_content_area[1]);
+        self.player.draw(frame, player_area);
     }
 
     fn set_focus(&mut self, focus_event: &Focus) {
@@ -125,40 +127,51 @@ impl MainWindow {
             Focus::Search => {
                 self.search.focused = true;
                 self.library.focused = false;
-                self.player.focused = false;
+                self.content.focused = false;
             }
             Focus::Library => {
                 self.search.focused = false;
                 self.search.input_mode = InputMode::Normal;
                 self.library.focused = true;
-                self.player.focused = false;
+                self.content.focused = false;
             }
             Focus::Player => {
                 self.search.focused = false;
                 self.search.input_mode = InputMode::Normal;
                 self.library.focused = false;
-                self.player.focused = true;
+                self.content.focused = false;
+            }
+            Focus::Content => {
+                self.search.focused = false;
+                self.search.input_mode = InputMode::Normal;
+                self.library.focused = false;
+                self.content.focused = true;
             }
             Focus::None => {
                 self.search.focused = false;
                 self.search.input_mode = InputMode::Normal;
                 self.library.focused = false;
-                self.player.focused = false;
+                self.content.focused = false;
             }
         };
     }
 }
 
-fn layout(area: Rect) -> (Rect, Rc<[Rect]>) {
+fn layout(area: Rect) -> (Rect, Rc<[Rect]>, Rect) {
+    let outer_layout = Layout::default()
+        .direction(Direction::Vertical)
+        .constraints(vec![Constraint::Percentage(85), Constraint::Percentage(15)])
+        .split(area);
+
     let left_layout = Layout::default()
         .direction(Direction::Horizontal)
         .constraints(vec![Constraint::Percentage(20), Constraint::Percentage(80)])
-        .split(area);
+        .split(outer_layout[0]);
 
     let right_layout = Layout::default()
         .direction(Direction::Vertical)
         .constraints(vec![Constraint::Min(3), Constraint::Percentage(100)])
         .split(left_layout[1]);
 
-    (left_layout[0], right_layout)
+    (left_layout[0], right_layout, outer_layout[1])
 }

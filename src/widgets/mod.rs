@@ -1,5 +1,6 @@
 use ratatui::prelude::Rect;
 pub mod await_login;
+pub mod content;
 pub mod landing;
 pub mod library;
 pub mod main_window;
