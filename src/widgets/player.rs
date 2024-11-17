@@ -71,6 +71,7 @@ impl Player {
                     .as_mut()
                     .expect("TODO")
                     .draw(frame, content_area),
+                SelectedTab::None => (),
             }
         }
     }
@@ -172,15 +173,11 @@ impl Player {
                         _ => (),
                     }
                 }
+                SelectedTab::None => (),
             }
-        } else {
-            match key_code {
-                KeyCode::Char('3') => {
-                    if let Err(err) = oe_tx.send(OxifyEvent::Focus(Focus::Player)) {
-                        log::error!("Cannot send event to main app: {err}")
-                    }
-                }
-                _ => todo!(),
+        } else if let KeyCode::Char('3') = key_code {
+            if let Err(err) = oe_tx.send(OxifyEvent::Focus(Focus::Player)) {
+                log::error!("Cannot send event to main app: {err}")
             }
         }
     }
@@ -227,7 +224,7 @@ impl Widget for Player {
         match self.search_data {
             None => {
                 let text_str = format!(
-                    " Hello, {}! Use the left window o the search bar to start listening music. ",
+                    " Hello, {}! Use the left window or the search bar to start listening music. ",
                     self.username
                 );
                 let content = Text::from(text_str.bold());

@@ -3,7 +3,6 @@ use strum::{Display, EnumIter, FromRepr};
 
 #[derive(Default, Clone, Copy, Display, FromRepr, EnumIter)]
 pub enum SelectedTab {
-    #[default]
     #[strum(to_string = "Tracks")]
     Tracks,
     #[strum(to_string = "Albums")]
@@ -12,6 +11,9 @@ pub enum SelectedTab {
     Artists,
     #[strum(to_string = "Playlists")]
     Playlists,
+    #[default]
+    #[strum(disabled)]
+    None,
 }
 
 impl SelectedTab {

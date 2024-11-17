@@ -27,15 +27,11 @@ impl Library {
             .clone()
             .expect("Event sender not initialized somehow");
         if self.focused {
-            todo!();
-        } else {
-            match key_code {
-                KeyCode::Char('2') => {
-                    if let Err(err) = oe_tx.send(OxifyEvent::Focus(Focus::Library)) {
-                        log::error!("Cannot send event to main app: {err}")
-                    }
-                }
-                _ => todo!(),
+            //TODO: Library behavior
+            return;
+        } else if let KeyCode::Char('2') = key_code {
+            if let Err(err) = oe_tx.send(OxifyEvent::Focus(Focus::Library)) {
+                log::error!("Cannot send event to main app: {err}")
             }
         }
     }
