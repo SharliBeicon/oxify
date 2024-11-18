@@ -1,6 +1,6 @@
 [package]
 name = "oxify"
-version = "0.1.0"
+version = "0.0.1-dev"
 edition = "2021"
 authors = ["Carlos Tocino <carlostocinocubelo@gmail.com>"]
 description = "A TUI Spotify Client"
