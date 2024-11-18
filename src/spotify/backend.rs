@@ -8,7 +8,7 @@ use librespot::{
         player::Player,
     },
 };
-use std::sync::mpsc;
+use std::sync::{mpsc, Arc, Mutex};
 
 pub async fn run(
     access_token: String,
@@ -36,8 +36,8 @@ pub async fn run(
     let mut ope_rx = ope_tx.subscribe();
 
     // Send the backend event handler to app.
-    let bpe_rx = player.get_player_event_channel();
-    OxifyEvent::send(&oe_tx, OxifyEvent::BackendPlayerReceiver(bpe_rx));
+    let bpe_rx = Arc::new(Mutex::new(player.get_player_event_channel()));
+    OxifyEvent::send(&oe_tx, OxifyEvent::BackendPlayerReceiver(bpe_rx.clone()));
 
     log::info!("Handling player events");
     while let Ok(event) = ope_rx.recv().await {

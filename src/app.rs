@@ -88,6 +88,9 @@ impl App<'_> {
                         }
                     }
                     OxifyEvent::ActiveBackend(is_active) => self.active_backend = *is_active,
+                    OxifyEvent::BackendPlayerReceiver(bpe_rx) => {
+                        self.main_window.set_backend_receiver(bpe_rx.clone())
+                    }
                     _ => (),
                 }
             }

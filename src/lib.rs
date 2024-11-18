@@ -2,7 +2,7 @@ use librespot::playback::player::PlayerEvent as LibrespotPlayerEvent;
 use model::track_data::SearchData;
 use ratatui::layout::{Constraint, Flex, Layout, Rect};
 use std::{
-    sync::{mpsc::Sender, LazyLock},
+    sync::{mpsc::Sender, Arc, LazyLock, Mutex},
     time::Duration,
 };
 use tokio::sync::{broadcast, mpsc::UnboundedReceiver};
@@ -45,7 +45,7 @@ pub enum OxifyEvent {
     Popup(Popup<'static>),
     ClosePopup,
     ActiveBackend(bool),
-    BackendPlayerReceiver(UnboundedReceiver<LibrespotPlayerEvent>),
+    BackendPlayerReceiver(Arc<Mutex<UnboundedReceiver<LibrespotPlayerEvent>>>),
 }
 
 impl OxifyEvent {

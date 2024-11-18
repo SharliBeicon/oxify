@@ -29,7 +29,6 @@ impl Library {
             .expect("Event sender not initialized somehow");
         if self.focused {
             //TODO: Library behavior
-            return;
         } else if let KeyCode::Char('2') = key_code {
             if let Err(err) = oe_tx.send(OxifyEvent::Focus(Focus::Library)) {
                 log::error!("Cannot send event to main app: {err}")

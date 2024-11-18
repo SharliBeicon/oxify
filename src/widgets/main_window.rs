@@ -8,12 +8,16 @@ use super::{
 };
 use crate::{model::user_profile::UserProfile, Focus, OxifyEvent, OxifyPlayerEvent};
 use crossterm::event::{Event as TerminalEvent, KeyCode, KeyEventKind};
+use librespot::playback::player::PlayerEvent as BackendPlayerEvent;
 use ratatui::{
     layout::{Constraint, Direction, Layout, Position, Rect},
     Frame,
 };
-use std::{rc::Rc, sync::mpsc::Sender};
-use tokio::sync::broadcast;
+use std::{
+    rc::Rc,
+    sync::{mpsc::Sender, Arc, Mutex},
+};
+use tokio::sync::{broadcast, mpsc::UnboundedReceiver};
 
 #[derive(Default)]
 pub struct MainWindow {
@@ -39,6 +43,13 @@ impl MainWindow {
         self.content.ope_tx = Some(ope_tx.clone());
     }
 
+    pub fn set_backend_receiver(
+        &mut self,
+        bpe_rx: Arc<Mutex<UnboundedReceiver<BackendPlayerEvent>>>,
+    ) {
+        self.player.bpe_rx = Some(bpe_rx);
+    }
+
     fn draw_input(&self, frame: &mut Frame, area: Rect) {
         #[allow(clippy::cast_possible_truncation)]
         frame.set_cursor_position(Position::new(
@@ -52,6 +63,8 @@ impl MainWindow {
         terminal_event: &Option<TerminalEvent>,
         oxify_event: &Option<OxifyEvent>,
     ) {
+        self.player.handle_events();
+
         if let Some(oxify_event) = oxify_event {
             match oxify_event {
                 OxifyEvent::Focus(focus) => self.set_focus(focus),
