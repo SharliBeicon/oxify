@@ -3,8 +3,8 @@ name = "oxify"
 version = "0.0.1-dev"
 edition = "2021"
 authors = ["Carlos Tocino <carlostocinocubelo@gmail.com>"]
-description = "A TUI Spotify Client"
-rust-version = "1.82.0"
+description = "Lightweight, customizable Spotify client"
+rust-version = "1.84.0"
 readme = "README.md"
 homepage = "https://oxify.rs"
 license = "MIT"
@@ -14,24 +14,12 @@ repository = "https://github.com/sharlibeicon/oxify"
 name = "oxify"
 
 [dependencies]
-oxify-derive = { path = "oxify_derive" }
-base64 = "0.22.1"
-chrono = "0.4.38"
-crossterm = "0.28.1"
-log = "0.4.22"
-open = "5.3.0"
-rand = "0.8.5"
-ratatui = "0.28.1"
-serde = { version = "1.0.210", features = ["derive"] }
-serde_json = "1.0.132"
+anyhow = "1.0.95"
+chrono = "0.4.39"
+iced = "0.13.1"
+librespot = { git="https://github.com/SharliBeicon/librespot.git", rev="0.6.0-oxify" }
+log = "0.4.25"
 simplelog = "0.12.2"
-ureq = "2.10.1"
-librespot = { version = "0.5.0", features = ["rodio-backend"] }
-derive_setters = "0.1.6"
-unicode-width = "0.2.0"
-tokio = { version = "1.41.0", features = ["rt-multi-thread", "macros"] }
-rustls = "0.23.16"
-strum = "0.26.3"
 
 [profile.dev]
 opt-level = 0

@@ -1,29 +1,26 @@
+use anyhow::Result;
 use chrono::{DateTime, Utc};
-use oxify::app::App;
-use simplelog::*;
-use std::fs::OpenOptions;
-use std::io;
-use std::time::SystemTime;
+use log::LevelFilter;
+use oxify::Oxify;
+use simplelog::WriteLogger;
+use std::{env, fs::OpenOptions, time::SystemTime};
 
-#[tokio::main]
-async fn main() -> io::Result<()> {
-    let _ = rustls::crypto::aws_lc_rs::default_provider().install_default();
-
+fn main() -> Result<()> {
     let dt: DateTime<Utc> = SystemTime::now().into();
-    let filename = dt.format("/tmp/%d-%m-%Y-oxify.log").to_string();
+    let filename = dt.format("%d-%m-%Y-oxify.log").to_string();
+    let temp_dir = env::temp_dir();
+    let log_path = temp_dir.join(filename);
+
     let file = OpenOptions::new()
         .create(true)
         .append(true)
-        .open(filename)?;
-    WriteLogger::init(LevelFilter::Info, Config::default(), file)
-        .expect("Cannot init logging engine");
+        .open(log_path)?;
 
-    let mut terminal = ratatui::init();
-    terminal.clear()?;
+    WriteLogger::init(LevelFilter::Info, simplelog::Config::default(), file)?;
 
-    let app_result = App::new().run(&mut terminal).await;
+    iced::daemon("Oxify", Oxify::update, Oxify::view)
+        .run_with(move || Oxify::new())
+        .inspect_err(|err| log::error!("{}", err))?;
 
-    ratatui::restore();
-
-    app_result
+    Ok(())
 }
