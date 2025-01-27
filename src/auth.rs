@@ -1,5 +1,4 @@
 use crate::oxify::{Message, OAuthError};
-use anyhow::anyhow;
 use librespot::oauth::OAuthCustomParams;
 
 const OAUTH_SCOPES: [&str; 16] = [

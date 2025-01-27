@@ -1,10 +1,9 @@
-use std::fmt::Display;
-
 use iced::{
     widget::{button, column, text, Column},
     window, Task,
 };
 use librespot::oauth::OAuthToken;
+use std::fmt::Display;
 
 use crate::auth;
 
@@ -23,7 +22,7 @@ pub enum OAuthError {
 impl Display for OAuthError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            OAuthError::Error(err) => write!(f, "{}", err.to_string()),
+            OAuthError::Error(err) => write!(f, "{}", err),
             OAuthError::Undefined => write!(f, "Auth token not defined yet"),
         }
     }
@@ -43,7 +42,7 @@ impl Default for Oxify {
 
 impl Oxify {
     pub fn new() -> (Self, Task<Message>) {
-        let (main_window, open_main_window) = window::open(window::Settings {
+        let (_, open_main_window) = window::open(window::Settings {
             size: iced::Size::new(400.0, 400.0),
             position: window::Position::Default,
             min_size: Some(iced::Size::new(100.0, 100.0)),
@@ -66,11 +65,11 @@ impl Oxify {
         }
     }
 
-    pub fn view(&self, id: window::Id) -> Column<Message> {
-        let token = self.oauth_token.as_ref().map_or_else(
-            |err| String::from(err.to_string()),
-            |t| t.access_token.clone(),
-        );
+    pub fn view(&self, _: window::Id) -> Column<Message> {
+        let token = self
+            .oauth_token
+            .as_ref()
+            .map_or_else(|err| err.to_string(), |t| t.access_token.clone());
 
         column![button("login").on_press(Message::Login), text(token)]
     }
