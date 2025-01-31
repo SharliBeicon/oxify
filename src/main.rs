@@ -19,6 +19,7 @@ fn main() -> Result<()> {
     WriteLogger::init(LevelFilter::Info, simplelog::Config::default(), file)?;
 
     iced::daemon("Oxify", Oxify::update, Oxify::view)
+        .theme(Oxify::theme)
         .run_with(Oxify::new)
         .inspect_err(|err| log::error!("{}", err))?;
 

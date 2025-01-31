@@ -16,10 +16,14 @@ name = "oxify"
 [dependencies]
 anyhow = "1.0.95"
 chrono = "0.4.39"
-iced = "0.13.1"
+dirs = "6.0.0"
+iced = {version="0.13.1", features = ["tokio"]}
 librespot = { git="https://github.com/SharliBeicon/librespot.git", rev="0.6.0-oxify" }
 log = "0.4.25"
+serde = { version = "1.0.217", features = ["derive"] }
 simplelog = "0.12.2"
+tokio = { version = "1.43.0", features = ["rt"] }
+toml = "0.8.19"
 
 [profile.dev]
 opt-level = 0

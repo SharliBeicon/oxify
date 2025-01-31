@@ -1,11 +1,14 @@
-use iced::{
-    widget::{button, column, text, Column},
-    window, Task,
-};
+use iced::{widget::container, window, Element, Size, Task, Theme};
 use librespot::oauth::OAuthToken;
 use std::fmt::Display;
 
-use crate::auth;
+use crate::{
+    auth,
+    config::CONFIG,
+    screen::{Screen, Welcome},
+};
+
+const MIN_SIZE: Size = Size::new(400.0, 300.0);
 
 #[derive(Debug, Clone)]
 pub enum Message {
@@ -30,12 +33,14 @@ impl Display for OAuthError {
 
 pub struct Oxify {
     pub oauth_token: Result<OAuthToken, OAuthError>,
+    pub screen: Screen,
 }
 
 impl Default for Oxify {
     fn default() -> Self {
         Self {
             oauth_token: Err(OAuthError::Undefined),
+            screen: Screen::Welcome(Welcome::new()),
         }
     }
 }
@@ -43,9 +48,9 @@ impl Default for Oxify {
 impl Oxify {
     pub fn new() -> (Self, Task<Message>) {
         let (_, open_main_window) = window::open(window::Settings {
-            size: iced::Size::new(400.0, 400.0),
+            size: CONFIG.window_size.into(),
             position: window::Position::Default,
-            min_size: Some(iced::Size::new(100.0, 100.0)),
+            min_size: Some(MIN_SIZE),
             exit_on_close_request: true,
             ..Default::default()
         });
@@ -60,17 +65,21 @@ impl Oxify {
                     log::error!("Cannot get access token: {}", err);
                 }
                 self.oauth_token = res;
+                println!("{:?}", self.oauth_token);
                 Task::none()
             }
         }
     }
 
-    pub fn view(&self, _: window::Id) -> Column<Message> {
-        let token = self
-            .oauth_token
-            .as_ref()
-            .map_or_else(|err| err.to_string(), |t| t.access_token.clone());
+    pub fn view(&self, _: window::Id) -> Element<Message> {
+        let content = match &self.screen {
+            Screen::Welcome(welcome) => welcome.view(),
+        };
 
-        column![button("login").on_press(Message::Login), text(token)]
+        container(content).into()
+    }
+
+    pub fn theme(&self, _window: window::Id) -> Theme {
+        CONFIG.get_theme()
     }
 }
