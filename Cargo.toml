@@ -4,7 +4,7 @@ version = "0.0.1-dev"
 edition = "2021"
 authors = ["Carlos Tocino <carlostocinocubelo@gmail.com>"]
 description = "Lightweight, customizable Spotify client"
-rust-version = "1.84.0"
+rust-version = "1.84.1"
 readme = "README.md"
 homepage = "https://oxify.rs"
 license = "MIT"
@@ -18,7 +18,7 @@ anyhow = "1.0.95"
 chrono = "0.4.39"
 dirs = "6.0.0"
 iced = {version="0.13.1", features = ["tokio"]}
-librespot = { git="https://github.com/SharliBeicon/librespot.git", rev="0.6.0-oxify" }
+librespot = { git="https://github.com/librespot-org/librespot.git", branch="dev" }
 log = "0.4.25"
 serde = { version = "1.0.217", features = ["derive"] }
 simplelog = "0.12.2"

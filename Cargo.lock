@@ -2835,7 +2835,7 @@ dependencies = [
 [[package]]
 name = "librespot"
 version = "0.6.0-dev"
-source = "git+https://github.com/SharliBeicon/librespot.git?rev=0.6.0-oxify#a7852a5af535bc27d2ec93c7d9e447d524b68a99"
+source = "git+https://github.com/librespot-org/librespot.git?branch=dev#f497806fb1cc85c81ee9feb95f225221bf7a6b53"
 dependencies = [
  "data-encoding",
  "env_logger",
@@ -2860,7 +2860,7 @@ dependencies = [
 [[package]]
 name = "librespot-audio"
 version = "0.6.0-dev"
-source = "git+https://github.com/SharliBeicon/librespot.git?rev=0.6.0-oxify#a7852a5af535bc27d2ec93c7d9e447d524b68a99"
+source = "git+https://github.com/librespot-org/librespot.git?branch=dev#f497806fb1cc85c81ee9feb95f225221bf7a6b53"
 dependencies = [
  "aes",
  "bytes",
@@ -2880,7 +2880,7 @@ dependencies = [
 [[package]]
 name = "librespot-connect"
 version = "0.6.0-dev"
-source = "git+https://github.com/SharliBeicon/librespot.git?rev=0.6.0-oxify#a7852a5af535bc27d2ec93c7d9e447d524b68a99"
+source = "git+https://github.com/librespot-org/librespot.git?branch=dev#f497806fb1cc85c81ee9feb95f225221bf7a6b53"
 dependencies = [
  "futures-util",
  "librespot-core",
@@ -2899,7 +2899,7 @@ dependencies = [
 [[package]]
 name = "librespot-core"
 version = "0.6.0-dev"
-source = "git+https://github.com/SharliBeicon/librespot.git?rev=0.6.0-oxify#a7852a5af535bc27d2ec93c7d9e447d524b68a99"
+source = "git+https://github.com/librespot-org/librespot.git?branch=dev#f497806fb1cc85c81ee9feb95f225221bf7a6b53"
 dependencies = [
  "aes",
  "base64 0.22.1",
@@ -2956,7 +2956,7 @@ dependencies = [
 [[package]]
 name = "librespot-discovery"
 version = "0.6.0-dev"
-source = "git+https://github.com/SharliBeicon/librespot.git?rev=0.6.0-oxify#a7852a5af535bc27d2ec93c7d9e447d524b68a99"
+source = "git+https://github.com/librespot-org/librespot.git?branch=dev#f497806fb1cc85c81ee9feb95f225221bf7a6b53"
 dependencies = [
  "aes",
  "base64 0.22.1",
@@ -2983,7 +2983,7 @@ dependencies = [
 [[package]]
 name = "librespot-metadata"
 version = "0.6.0-dev"
-source = "git+https://github.com/SharliBeicon/librespot.git?rev=0.6.0-oxify#a7852a5af535bc27d2ec93c7d9e447d524b68a99"
+source = "git+https://github.com/librespot-org/librespot.git?branch=dev#f497806fb1cc85c81ee9feb95f225221bf7a6b53"
 dependencies = [
  "async-trait",
  "bytes",
@@ -3000,7 +3000,7 @@ dependencies = [
 [[package]]
 name = "librespot-oauth"
 version = "0.6.0-dev"
-source = "git+https://github.com/SharliBeicon/librespot.git?rev=0.6.0-oxify#a7852a5af535bc27d2ec93c7d9e447d524b68a99"
+source = "git+https://github.com/librespot-org/librespot.git?branch=dev#f497806fb1cc85c81ee9feb95f225221bf7a6b53"
 dependencies = [
  "log",
  "oauth2",
@@ -3012,7 +3012,7 @@ dependencies = [
 [[package]]
 name = "librespot-playback"
 version = "0.6.0-dev"
-source = "git+https://github.com/SharliBeicon/librespot.git?rev=0.6.0-oxify#a7852a5af535bc27d2ec93c7d9e447d524b68a99"
+source = "git+https://github.com/librespot-org/librespot.git?branch=dev#f497806fb1cc85c81ee9feb95f225221bf7a6b53"
 dependencies = [
  "cpal",
  "futures-util",
@@ -3021,6 +3021,7 @@ dependencies = [
  "librespot-metadata",
  "log",
  "parking_lot 0.12.3",
+ "portable-atomic",
  "rand",
  "rand_distr",
  "rodio",
@@ -3034,7 +3035,7 @@ dependencies = [
 [[package]]
 name = "librespot-protocol"
 version = "0.6.0-dev"
-source = "git+https://github.com/SharliBeicon/librespot.git?rev=0.6.0-oxify#a7852a5af535bc27d2ec93c7d9e447d524b68a99"
+source = "git+https://github.com/librespot-org/librespot.git?branch=dev#f497806fb1cc85c81ee9feb95f225221bf7a6b53"
 dependencies = [
  "protobuf",
  "protobuf-codegen",

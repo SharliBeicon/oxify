@@ -13,6 +13,7 @@ const MIN_SIZE: Size = Size::new(400.0, 300.0);
 #[derive(Debug, Clone)]
 pub enum Message {
     Login,
+    ReloadConfig,
     Token(Result<OAuthToken, OAuthError>),
 }
 
@@ -48,7 +49,7 @@ impl Default for Oxify {
 impl Oxify {
     pub fn new() -> (Self, Task<Message>) {
         let (_, open_main_window) = window::open(window::Settings {
-            size: CONFIG.window_size.into(),
+            size: CONFIG.read().unwrap().window_size.into(),
             position: window::Position::Default,
             min_size: Some(MIN_SIZE),
             exit_on_close_request: true,
@@ -68,6 +69,10 @@ impl Oxify {
                 println!("{:?}", self.oauth_token);
                 Task::none()
             }
+            Message::ReloadConfig => {
+                CONFIG.write().unwrap().reload();
+                Task::none()
+            }
         }
     }
 
@@ -80,6 +85,6 @@ impl Oxify {
     }
 
     pub fn theme(&self, _window: window::Id) -> Theme {
-        CONFIG.get_theme()
+        CONFIG.read().unwrap().get_theme()
     }
 }

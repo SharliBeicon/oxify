@@ -2,9 +2,9 @@ use iced::Theme;
 use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::PathBuf;
-use std::sync::LazyLock;
+use std::sync::{LazyLock, RwLock};
 
-pub static CONFIG: LazyLock<Config> = LazyLock::new(Config::load);
+pub static CONFIG: LazyLock<RwLock<Config>> = LazyLock::new(|| RwLock::new(Config::load()));
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct Config {

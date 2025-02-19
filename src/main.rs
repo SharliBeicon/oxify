@@ -5,6 +5,11 @@ use oxify::Oxify;
 use simplelog::WriteLogger;
 use std::{env, fs::OpenOptions, time::SystemTime};
 
+mod auth;
+mod config;
+mod oxify;
+mod screen;
+
 fn main() -> Result<()> {
     let dt: DateTime<Utc> = SystemTime::now().into();
     let filename = dt.format("%d-%m-%Y-oxify.log").to_string();

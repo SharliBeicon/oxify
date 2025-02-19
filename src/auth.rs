@@ -37,7 +37,7 @@ pub async fn login() -> Message {
 
     Message::Token(
         client
-            .get_access_token()
+            .get_access_token_async()
             .await
             .map_err(|err| OAuthError::Error(err.to_string())),
     )
