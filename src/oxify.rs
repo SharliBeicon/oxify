@@ -1,39 +1,15 @@
 use crate::{
-    auth,
     config::Config,
-    logger,
     screen::{Screen, Welcome},
 };
-use data::log::Record;
+use data::{
+    log::Record,
+    types::{Message, OAuthError, OAuthToken},
+};
 use iced::{widget::container, window, Element, Size, Task, Theme};
-use librespot::oauth::OAuthToken;
-use std::fmt::Display;
 use tokio_stream::wrappers::ReceiverStream;
 
 const MIN_SIZE: Size = Size::new(400.0, 300.0);
-
-#[derive(Debug, Clone)]
-pub enum Message {
-    Login,
-    ReloadConfig,
-    Token(Result<OAuthToken, OAuthError>),
-    Logging(Vec<logger::Record>),
-}
-
-#[derive(Clone, Debug)]
-pub enum OAuthError {
-    Error(String),
-    Undefined,
-}
-
-impl Display for OAuthError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            OAuthError::Error(err) => write!(f, "{}", err),
-            OAuthError::Undefined => write!(f, "Auth token not defined yet"),
-        }
-    }
-}
 
 pub struct Oxify {
     pub oauth_token: Result<OAuthToken, OAuthError>,
@@ -63,7 +39,7 @@ impl Oxify {
 
     pub fn update(&mut self, message: Message) -> Task<Message> {
         match message {
-            Message::Login => Task::perform(auth::login(), |msg: Message| msg),
+            Message::Login => Task::perform(spotify::auth::login(), |msg: Message| msg),
             Message::Token(res) => {
                 if let Err(err) = &res {
                     log::error!("Cannot get access token: {}", err);

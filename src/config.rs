@@ -1,7 +1,7 @@
+use data::environment;
 use iced::Theme;
 use serde::{Deserialize, Serialize};
 use std::fs;
-use std::path::PathBuf;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Config {
@@ -74,24 +74,27 @@ fn default_font_size() -> f32 {
 
 impl Config {
     pub fn load() -> Self {
-        let config_path = get_config_path();
+        let config_path = environment::config_dir().join(environment::CONFIG_FILE_NAME);
 
-        let config_content = match fs::read_to_string(config_path) {
-            Ok(content) => content,
-            Err(_) => return Config::default(),
-        };
+        let mut config_content = String::new();
+        log::debug!(
+            "Looking for Config file in: {}",
+            config_path.to_str().unwrap_or("")
+        );
 
-        toml::from_str(&config_content).unwrap_or_else(|_| Config::default())
+        if let Ok(content) = fs::read_to_string(config_path) {
+            config_content = content;
+        }
+
+        toml::from_str(&config_content).unwrap_or_else(|err| {
+            log::warn!(
+                "Config file found but cannot be loaded: {err}\nUsing default config instead"
+            );
+            Config::default()
+        })
     }
 
     pub fn reload(&mut self) {
         *self = Self::load()
     }
-}
-
-fn get_config_path() -> PathBuf {
-    let mut path = dirs::home_dir().expect("Could not find user home directory");
-    path.push(".oxify");
-    path.push("config.toml");
-    path
 }

@@ -1,4 +1,4 @@
-use crate::oxify::Message;
+use data::types::Message;
 use iced::{
     alignment,
     widget::{button, column, container, text},

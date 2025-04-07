@@ -2,7 +2,6 @@ use data::environment;
 use oxify::Oxify;
 use std::env;
 
-mod auth;
 mod config;
 mod font;
 mod logger;

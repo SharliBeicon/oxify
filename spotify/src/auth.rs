@@ -1,7 +1,8 @@
+use data::types::{Message, OAuthError};
 use librespot::oauth::OAuthClientBuilder;
 
-use crate::oxify::{Message, OAuthError};
-
+const CLIENT_ID: &str = "a4df561fbabb40a3b3ead45196990b6d";
+const CALLBACK_URL: &str = "http://localhost:60069/authorization/callback";
 const OAUTH_SCOPES: [&str; 16] = [
     "user-read-playback-state",
     "user-modify-playback-state",
@@ -22,14 +23,10 @@ const OAUTH_SCOPES: [&str; 16] = [
 ];
 
 pub async fn login() -> Message {
-    let client = match OAuthClientBuilder::new(
-        "a4df561fbabb40a3b3ead45196990b6d",
-        "http://localhost:60069/authorization/callback",
-        OAUTH_SCOPES.to_vec(),
-    )
-    .open_in_browser()
-    .with_custom_message(include_str!("../auth_response.html"))
-    .build()
+    let client = match OAuthClientBuilder::new(CLIENT_ID, CALLBACK_URL, OAUTH_SCOPES.to_vec())
+        .open_in_browser()
+        .with_custom_message(include_str!("../../auth_response.html"))
+        .build()
     {
         Ok(client) => client,
         Err(err) => return Message::Token(Err(OAuthError::Error(err.to_string()))),

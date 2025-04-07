@@ -991,6 +991,7 @@ version = "0.1.0"
 dependencies = [
  "chrono",
  "dirs-next",
+ "librespot",
  "log",
  "serde",
  "strum 0.27.1",
@@ -3676,9 +3677,9 @@ dependencies = [
  "dirs",
  "fern",
  "iced",
- "librespot",
  "log",
  "serde",
+ "spotify",
  "thiserror 2.0.12",
  "tokio",
  "tokio-stream",
@@ -4988,6 +4989,14 @@ checksum = "d91ed6c858b01f942cd56b37a94b3e0a1798290327d1236e4d9cf4eaca44d29d"
 dependencies = [
  "base64ct",
  "der",
+]
+
+[[package]]
+name = "spotify"
+version = "0.1.0"
+dependencies = [
+ "data",
+ "librespot",
 ]
 
 [[package]]

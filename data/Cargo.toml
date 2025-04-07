@@ -11,3 +11,4 @@ strum = { workspace = true }
 chrono = { workspace = true }
 serde = { workspace = true }
 log = { workspace = true }
+librespot = { workspace = true }

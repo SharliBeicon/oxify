@@ -1,16 +1,14 @@
+use chrono::Utc;
+use data::log::{Error, Record};
+use log::Log;
 use std::{
     env, mem,
     sync::mpsc,
     thread,
     time::{Duration, Instant},
 };
-
-use chrono::Utc;
-use log::Log;
 use tokio::sync::mpsc as tokio_mpsc;
 use tokio_stream::wrappers::ReceiverStream;
-
-pub use data::log::{Error, Record};
 
 pub fn setup(is_debug: bool) -> Result<ReceiverStream<Vec<Record>>, Error> {
     let level_filter = env::var("RUST_LOG")
