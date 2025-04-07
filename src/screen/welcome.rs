@@ -1,4 +1,4 @@
-use data::types::Message;
+use data::messages::OxifyMessage;
 use iced::{
     alignment,
     widget::{button, column, container, text},
@@ -18,7 +18,7 @@ impl Welcome {
         Self {}
     }
 
-    pub fn view(&self) -> Element<Message> {
+    pub fn view(&self) -> Element<OxifyMessage> {
         let config_button = button(
             container(text("Login"))
                 .align_x(alignment::Horizontal::Center)
@@ -26,7 +26,7 @@ impl Welcome {
         )
         .padding([5, 20])
         .width(Length::Shrink)
-        .on_press(Message::Login);
+        .on_press(OxifyMessage::Login);
 
         let reload_config = button(
             container(text("ReloadConfig"))
@@ -35,7 +35,7 @@ impl Welcome {
         )
         .padding([5, 20])
         .width(Length::Shrink)
-        .on_press(Message::ReloadConfig);
+        .on_press(OxifyMessage::ReloadConfig);
 
         container(
             column![config_button, reload_config]

@@ -1,9 +1,7 @@
-use data::environment;
+use data::{config::Config, environment, font};
 use oxify::Oxify;
 use std::env;
 
-mod config;
-mod font;
 mod logger;
 mod oxify;
 mod screen;
@@ -26,10 +24,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     log::info!("config dir: {:?}", environment::config_dir());
     log::info!("data dir: {:?}", environment::data_dir());
 
-    let config = config::Config::load();
+    let config = Config::load();
     log::info!("Config loaded: {config:?}");
-
-    font::set(&config);
 
     let settings = iced::Settings {
         default_font: font::MONO.clone().into(),

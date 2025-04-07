@@ -1,4 +1,4 @@
-use data::environment;
+use crate::environment;
 use iced::Theme;
 use serde::{Deserialize, Serialize};
 use std::fs;
@@ -86,12 +86,16 @@ impl Config {
             config_content = content;
         }
 
-        toml::from_str(&config_content).unwrap_or_else(|err| {
+        let config = toml::from_str(&config_content).unwrap_or_else(|err| {
             log::warn!(
                 "Config file found but cannot be loaded: {err}\nUsing default config instead"
             );
             Config::default()
-        })
+        });
+
+        crate::font::set(&config);
+
+        config
     }
 
     pub fn reload(&mut self) {

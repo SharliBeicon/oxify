@@ -62,13 +62,13 @@ pub fn set(config: &Config) {
 
 pub fn load() -> Vec<Cow<'static, [u8]>> {
     vec![
-        include_bytes!("../fonts/iosevka-term-regular.ttf")
+        include_bytes!("../../fonts/iosevka-term-regular.ttf")
             .as_slice()
             .into(),
-        include_bytes!("../fonts/iosevka-term-bold.ttf")
+        include_bytes!("../../fonts/iosevka-term-bold.ttf")
             .as_slice()
             .into(),
-        include_bytes!("../fonts/iosevka-term-italic.ttf")
+        include_bytes!("../../fonts/iosevka-term-italic.ttf")
             .as_slice()
             .into(),
     ]
