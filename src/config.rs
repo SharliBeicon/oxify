@@ -2,11 +2,8 @@ use iced::Theme;
 use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::PathBuf;
-use std::sync::{LazyLock, RwLock};
 
-pub static CONFIG: LazyLock<RwLock<Config>> = LazyLock::new(|| RwLock::new(Config::load()));
-
-#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Config {
     #[serde(default = "default_window_size")]
     pub window_size: (f32, f32),
@@ -14,6 +11,19 @@ pub struct Config {
     pub theme: String,
     #[serde(default = "default_font_family")]
     pub font_family: String,
+    #[serde(default = "default_font_size")]
+    pub font_size: f32,
+}
+
+impl Default for Config {
+    fn default() -> Self {
+        Self {
+            window_size: default_window_size(),
+            theme: default_theme(),
+            font_family: default_font_family(),
+            font_size: default_font_size(),
+        }
+    }
 }
 
 impl Config {
@@ -55,7 +65,11 @@ fn default_theme() -> String {
 }
 
 fn default_font_family() -> String {
-    "Arial".into()
+    "Iosevka Term".into()
+}
+
+fn default_font_size() -> f32 {
+    16.0
 }
 
 impl Config {

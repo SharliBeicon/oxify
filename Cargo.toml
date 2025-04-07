@@ -13,17 +13,43 @@ repository = "https://github.com/sharlibeicon/oxify"
 [[bin]]
 name = "oxify"
 
+[workspace]
+resolver = "2"
+
+[workspace.dependencies]
+tokio = { version = "1.44.2", features = ["rt"] }
+chrono = { version = "0.4.40", features = ["serde"] }
+tokio-stream = { version = "0.1.17" }
+thiserror = "2.0.12"
+serde = { version = "1.0.219", features = ["derive"] }
+log = "0.4.27"
+strum = { version = "0.27.1", features = ["derive"] }
+
 [dependencies]
-anyhow = "1.0.95"
-chrono = "0.4.39"
+log = { workspace = true }
+chrono = { workspace = true }
+tokio = { workspace = true, features = ["rt", "fs"] }
+thiserror = { workspace = true }
+serde = { workspace = true }
+tokio-stream = { workspace = true, features = ["fs"] }
 dirs = "6.0.0"
-iced = {version="0.13.1", features = ["tokio"]}
-librespot = { git="https://github.com/librespot-org/librespot.git", branch="dev" }
-log = "0.4.25"
-serde = { version = "1.0.217", features = ["derive"] }
-simplelog = "0.12.2"
-tokio = { version = "1.43.0", features = ["rt"] }
-toml = "0.8.19"
+iced = { version = "0.14.0-dev", default-features = false, features = [
+  "wgpu",
+  "tiny-skia",
+  "fira-sans",
+  "tokio",
+  "lazy",
+  "advanced",
+  "image",
+] }
+librespot = { git = "https://github.com/librespot-org/librespot.git", branch = "dev" }
+toml = "0.8.20"
+fern = "0.7.1"
+
+data = { version = "0.1.0", path = "data" }
+
+[patch.crates-io]
+iced = { git = "https://github.com/iced-rs/iced", rev = "1b22d7d5fcdf519a3cac7a3cfd14398a3108c3b8" }
 
 [profile.dev]
 opt-level = 0

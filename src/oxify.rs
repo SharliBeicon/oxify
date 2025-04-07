@@ -1,12 +1,14 @@
+use crate::{
+    auth,
+    config::Config,
+    logger,
+    screen::{Screen, Welcome},
+};
+use data::log::Record;
 use iced::{widget::container, window, Element, Size, Task, Theme};
 use librespot::oauth::OAuthToken;
 use std::fmt::Display;
-
-use crate::{
-    auth,
-    config::CONFIG,
-    screen::{Screen, Welcome},
-};
+use tokio_stream::wrappers::ReceiverStream;
 
 const MIN_SIZE: Size = Size::new(400.0, 300.0);
 
@@ -15,6 +17,7 @@ pub enum Message {
     Login,
     ReloadConfig,
     Token(Result<OAuthToken, OAuthError>),
+    Logging(Vec<logger::Record>),
 }
 
 #[derive(Clone, Debug)]
@@ -35,27 +38,27 @@ impl Display for OAuthError {
 pub struct Oxify {
     pub oauth_token: Result<OAuthToken, OAuthError>,
     pub screen: Screen,
-}
-
-impl Default for Oxify {
-    fn default() -> Self {
-        Self {
-            oauth_token: Err(OAuthError::Undefined),
-            screen: Screen::Welcome(Welcome::new()),
-        }
-    }
+    pub config: Config,
 }
 
 impl Oxify {
-    pub fn new() -> (Self, Task<Message>) {
-        let (_, open_main_window) = window::open(window::Settings {
-            size: CONFIG.read().unwrap().window_size.into(),
+    pub fn new(config: Config, log_stream: ReceiverStream<Vec<Record>>) -> (Self, Task<Message>) {
+        let (main_window, open_main_window) = window::open(window::Settings {
+            size: config.window_size.into(),
             position: window::Position::Default,
             min_size: Some(MIN_SIZE),
             exit_on_close_request: true,
             ..Default::default()
         });
-        (Self::default(), open_main_window.then(|_| Task::none()))
+
+        let (oxify, command) = Oxify::load_from_state(config, main_window);
+        let commands = vec![
+            open_main_window.then(|_| Task::none()),
+            command,
+            Task::stream(log_stream).map(Message::Logging),
+        ];
+
+        (oxify, Task::batch(commands))
     }
 
     pub fn update(&mut self, message: Message) -> Task<Message> {
@@ -70,9 +73,10 @@ impl Oxify {
                 Task::none()
             }
             Message::ReloadConfig => {
-                CONFIG.write().unwrap().reload();
+                self.config.reload();
                 Task::none()
             }
+            Message::Logging(_) => Task::none(),
         }
     }
 
@@ -85,6 +89,15 @@ impl Oxify {
     }
 
     pub fn theme(&self, _window: window::Id) -> Theme {
-        CONFIG.read().unwrap().get_theme()
+        self.config.get_theme()
+    }
+
+    pub fn load_from_state(config: Config, _: window::Id) -> (Oxify, Task<Message>) {
+        let oxify = Self {
+            oauth_token: Err(OAuthError::Undefined),
+            screen: Screen::Welcome(Welcome::new()),
+            config,
+        };
+        (oxify, Task::none())
     }
 }

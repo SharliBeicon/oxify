@@ -1,31 +1,49 @@
-use anyhow::Result;
-use chrono::{DateTime, Utc};
-use log::LevelFilter;
+use data::environment;
 use oxify::Oxify;
-use simplelog::WriteLogger;
-use std::{env, fs::OpenOptions, time::SystemTime};
+use std::env;
 
 mod auth;
 mod config;
+mod font;
+mod logger;
 mod oxify;
 mod screen;
 
-fn main() -> Result<()> {
-    let dt: DateTime<Utc> = SystemTime::now().into();
-    let filename = dt.format("%d-%m-%Y-oxify.log").to_string();
-    let temp_dir = env::temp_dir();
-    let log_path = temp_dir.join(filename);
+fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let mut args = env::args();
+    args.next();
 
-    let file = OpenOptions::new()
-        .create(true)
-        .append(true)
-        .open(log_path)?;
+    let version = args.next().is_some_and(|s| s == "--version" || s == "-v");
 
-    WriteLogger::init(LevelFilter::Info, simplelog::Config::default(), file)?;
+    if version {
+        println!("Oxify {}", env!("CARGO_PKG_VERSION"));
+        return Ok(());
+    }
+
+    let is_debug = cfg!(debug_assertions);
+
+    let log_stream = logger::setup(is_debug).expect("Cannot setup logging");
+    log::info!("Oxify {} started", env!("CARGO_PKG_VERSION"));
+    log::info!("config dir: {:?}", environment::config_dir());
+    log::info!("data dir: {:?}", environment::data_dir());
+
+    let config = config::Config::load();
+    log::info!("Config loaded: {config:?}");
+
+    font::set(&config);
+
+    let settings = iced::Settings {
+        default_font: font::MONO.clone().into(),
+        default_text_size: config.font_size.into(),
+        id: None,
+        antialiasing: false,
+        fonts: font::load(),
+    };
 
     iced::daemon("Oxify", Oxify::update, Oxify::view)
         .theme(Oxify::theme)
-        .run_with(Oxify::new)
+        .settings(settings)
+        .run_with(move || Oxify::new(config, log_stream))
         .inspect_err(|err| log::error!("{}", err))?;
 
     Ok(())

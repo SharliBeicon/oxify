@@ -1,0 +1,13 @@
+[package]
+name = "data"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+dirs-next = "2.0"
+xdg = "2.5.2"
+thiserror = { workspace = true }
+strum = { workspace = true }
+chrono = { workspace = true }
+serde = { workspace = true }
+log = { workspace = true }
