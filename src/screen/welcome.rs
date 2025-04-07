@@ -1,24 +1,49 @@
-use data::messages::OxifyMessage;
+use data::{
+    config::get_config_mut,
+    environment::{self, WEBSITE_URL},
+    messages::WelcomeMessage,
+};
 use iced::{
     alignment,
     widget::{button, column, container, text},
     Element, Length,
 };
 
-pub struct Welcome {}
+#[derive(Debug, Default, Clone)]
+pub struct Welcome;
 
-impl Default for Welcome {
-    fn default() -> Self {
-        Self::new()
-    }
+pub enum WelcomeEvent {
+    LoginAttempt,
 }
 
 impl Welcome {
     pub fn new() -> Self {
-        Self {}
+        Self
     }
 
-    pub fn view(&self) -> Element<OxifyMessage> {
+    pub fn update(&mut self, message: WelcomeMessage) -> Option<WelcomeEvent> {
+        match message {
+            WelcomeMessage::Login => Some(WelcomeEvent::LoginAttempt),
+            WelcomeMessage::ReloadConfig => {
+                get_config_mut().reload();
+
+                None
+            }
+
+            WelcomeMessage::OpenConfigDir => {
+                let _ = open::that_detached(environment::config_dir());
+
+                None
+            }
+            WelcomeMessage::OpenWebsite => {
+                let _ = open::that_detached(WEBSITE_URL);
+
+                None
+            }
+        }
+    }
+
+    pub fn view(&self) -> Element<WelcomeMessage> {
         let config_button = button(
             container(text("Login"))
                 .align_x(alignment::Horizontal::Center)
@@ -26,7 +51,7 @@ impl Welcome {
         )
         .padding([5, 20])
         .width(Length::Shrink)
-        .on_press(OxifyMessage::Login);
+        .on_press(WelcomeMessage::Login);
 
         let reload_config = button(
             container(text("ReloadConfig"))
@@ -35,7 +60,7 @@ impl Welcome {
         )
         .padding([5, 20])
         .width(Length::Shrink)
-        .on_press(OxifyMessage::ReloadConfig);
+        .on_press(WelcomeMessage::ReloadConfig);
 
         container(
             column![config_button, reload_config]

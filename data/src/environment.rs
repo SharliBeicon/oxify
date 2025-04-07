@@ -1,6 +1,7 @@
 use std::path::PathBuf;
 
 pub const CONFIG_FILE_NAME: &str = "config.toml";
+pub const WEBSITE_URL: &str = "https://oxify.rs";
 
 pub fn config_dir() -> PathBuf {
     platform_specific_config_dir()

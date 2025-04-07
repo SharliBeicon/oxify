@@ -1,4 +1,4 @@
-use data::messages::OxifyMessage;
+use data::messages::{Message, OxifyMessage};
 use librespot::oauth::OAuthClientBuilder;
 use std::fmt::Display;
 
@@ -23,6 +23,7 @@ const OAUTH_SCOPES: [&str; 16] = [
     "user-read-private",
 ];
 
+pub use librespot::oauth::OAuthToken;
 #[derive(Clone, Debug)]
 pub enum OAuthError {
     Error(String),
@@ -37,7 +38,7 @@ impl Display for OAuthError {
         }
     }
 }
-pub async fn login() -> OxifyMessage {
+pub async fn login() -> Message {
     let client = match OAuthClientBuilder::new(CLIENT_ID, CALLBACK_URL, OAUTH_SCOPES.to_vec())
         .open_in_browser()
         .with_custom_message(include_str!("../../auth_response.html"))
@@ -46,11 +47,11 @@ pub async fn login() -> OxifyMessage {
         Ok(client) => client,
         Err(err) => {
             log::error!("Failed login attempt: {err}");
-            return OxifyMessage::Token(None);
+            return Message::OxifyMessage(OxifyMessage::Token(None));
         }
     };
 
-    OxifyMessage::Token(
+    Message::OxifyMessage(OxifyMessage::Token(
         client
             .get_access_token_async()
             .await
@@ -58,5 +59,5 @@ pub async fn login() -> OxifyMessage {
                 log::error!("Failed login attempt: {err}");
             })
             .ok(),
-    )
+    ))
 }

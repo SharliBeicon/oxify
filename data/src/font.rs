@@ -1,4 +1,4 @@
-use crate::config::Config;
+use crate::config::get_config;
 use iced::font;
 use std::borrow::Cow;
 use std::sync::OnceLock;
@@ -51,8 +51,8 @@ impl From<Font> for iced::Font {
     }
 }
 
-pub fn set(config: &Config) {
-    let family = config.font_family.clone();
+pub fn set() {
+    let family = get_config().font_family.clone();
 
     MONO.set(family.clone());
     MONO_BOLD.set(family.clone());

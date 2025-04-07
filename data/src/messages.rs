@@ -1,11 +1,22 @@
 use crate::log::Record;
-
-pub use librespot::oauth::OAuthToken;
+use librespot::oauth::OAuthToken;
 
 #[derive(Debug, Clone)]
 pub enum OxifyMessage {
+    Logging(Vec<Record>),
+    Token(Option<OAuthToken>),
+}
+
+#[derive(Debug, Clone)]
+pub enum WelcomeMessage {
     Login,
     ReloadConfig,
-    Token(Option<OAuthToken>),
-    Logging(Vec<Record>),
+    OpenConfigDir,
+    OpenWebsite,
+}
+
+#[derive(Debug, Clone)]
+pub enum Message {
+    OxifyMessage(OxifyMessage),
+    WelcomeMessage(WelcomeMessage),
 }

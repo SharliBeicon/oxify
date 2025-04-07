@@ -1,4 +1,4 @@
-use data::{config::Config, environment, font};
+use data::{config::get_config, environment, font};
 use oxify::Oxify;
 use std::env;
 
@@ -24,12 +24,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     log::info!("config dir: {:?}", environment::config_dir());
     log::info!("data dir: {:?}", environment::data_dir());
 
-    let config = Config::load();
-    log::info!("Config loaded: {config:?}");
+    crate::font::set();
 
     let settings = iced::Settings {
         default_font: font::MONO.clone().into(),
-        default_text_size: config.font_size.into(),
+        default_text_size: get_config().font_size.into(),
         id: None,
         antialiasing: false,
         fonts: font::load(),
@@ -38,7 +37,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     iced::daemon("Oxify", Oxify::update, Oxify::view)
         .theme(Oxify::theme)
         .settings(settings)
-        .run_with(move || Oxify::new(config, log_stream))
+        .run_with(move || Oxify::new(log_stream))
         .inspect_err(|err| log::error!("{}", err))?;
 
     Ok(())

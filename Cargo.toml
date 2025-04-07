@@ -49,6 +49,7 @@ toml = "0.8.20"
 fern = "0.7.1"
 data = { version = "0.1.0", path = "data" }
 spotify = { version = "0.1.0", path = "spotify" }
+open = "5.3.2"
 
 [patch.crates-io]
 iced = { git = "https://github.com/iced-rs/iced", rev = "1b22d7d5fcdf519a3cac7a3cfd14398a3108c3b8" }

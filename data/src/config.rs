@@ -1,7 +1,20 @@
 use crate::environment;
 use iced::Theme;
 use serde::{Deserialize, Serialize};
-use std::fs;
+use std::{
+    fs,
+    sync::{LazyLock, RwLock, RwLockReadGuard, RwLockWriteGuard},
+};
+
+static CONFIG: LazyLock<RwLock<Config>> = LazyLock::new(|| RwLock::new(Config::load()));
+
+pub fn get_config() -> RwLockReadGuard<'static, Config> {
+    CONFIG.read().unwrap()
+}
+
+pub fn get_config_mut() -> RwLockWriteGuard<'static, Config> {
+    CONFIG.write().unwrap()
+}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Config {
@@ -76,26 +89,30 @@ impl Config {
     pub fn load() -> Self {
         let config_path = environment::config_dir().join(environment::CONFIG_FILE_NAME);
 
-        let mut config_content = String::new();
         log::debug!(
             "Looking for Config file in: {}",
             config_path.to_str().unwrap_or("")
         );
 
-        if let Ok(content) = fs::read_to_string(config_path) {
-            config_content = content;
+        match fs::read_to_string(&config_path) {
+            Ok(content) => toml::from_str(&content).unwrap_or_else(|err| {
+                log::warn!(
+                    "Config file found but cannot be loaded: {err}\nUsing default config instead"
+                );
+                Config::default()
+            }),
+            Err(err) => match err.kind() {
+                std::io::ErrorKind::NotFound => {
+                    let config = Config::default();
+                    log::warn!("Config file not found, creating a default one");
+                    let content = toml::to_string(&config).unwrap_or(String::new());
+                    let _ = fs::write(config_path, content);
+
+                    config
+                }
+                _ => todo!(),
+            },
         }
-
-        let config = toml::from_str(&config_content).unwrap_or_else(|err| {
-            log::warn!(
-                "Config file found but cannot be loaded: {err}\nUsing default config instead"
-            );
-            Config::default()
-        });
-
-        crate::font::set(&config);
-
-        config
     }
 
     pub fn reload(&mut self) {
