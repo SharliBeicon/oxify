@@ -3,4 +3,5 @@ pub use welcome::Welcome;
 
 pub enum Screen {
     Welcome(welcome::Welcome),
+    Oxify,
 }

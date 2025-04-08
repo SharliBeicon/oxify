@@ -2,7 +2,7 @@ use crate::screen::{Screen, Welcome};
 use data::{
     config::get_config,
     log::Record,
-    messages::{Message, OxifyMessage, WelcomeMessage},
+    messages::{Message, OxifyMessage},
 };
 use iced::{widget::container, window, Element, Size, Task, Theme};
 use spotify::auth::OAuthToken;
@@ -41,18 +41,24 @@ impl Oxify {
                 OxifyMessage::Logging(_) => Task::none(),
                 OxifyMessage::Token(oauth_token) => todo!(),
             },
-            Message::WelcomeMessage(welcome_message) => match welcome_message {
-                WelcomeMessage::Login => todo!(),
-                WelcomeMessage::ReloadConfig => todo!(),
-                WelcomeMessage::OpenConfigDir => todo!(),
-                WelcomeMessage::OpenWebsite => todo!(),
-            },
+            Message::WelcomeMessage(welcome_message) => {
+                let Screen::Welcome(welcome) = &mut self.screen else {
+                    return Task::none();
+                };
+
+                if let None = welcome.update(welcome_message) {
+                    return Task::none();
+                }
+
+                Task::future(spotify::auth::login())
+            }
         }
     }
 
     pub fn view(&self, _: window::Id) -> Element<Message> {
         let content = match &self.screen {
             Screen::Welcome(welcome) => welcome.view().map(Message::WelcomeMessage),
+            Screen::Oxify => todo!(),
         };
 
         container(content).into()

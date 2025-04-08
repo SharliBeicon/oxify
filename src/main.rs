@@ -5,6 +5,7 @@ use std::env;
 mod logger;
 mod oxify;
 mod screen;
+mod ui;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut args = env::args();
