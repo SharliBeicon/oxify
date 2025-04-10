@@ -5,5 +5,5 @@ edition = "2024"
 
 [dependencies]
 data = { version = "0.1.0", path = "../data" }
-librespot = { workspace = true }
-log = { workspace = true }
+librespot.workspace = true
+log.workspace = true

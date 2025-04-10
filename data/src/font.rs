@@ -1,4 +1,3 @@
-use crate::config::get_config;
 use iced::font;
 use std::borrow::Cow;
 use std::sync::OnceLock;
@@ -52,7 +51,7 @@ impl From<Font> for iced::Font {
 }
 
 pub fn set() {
-    let family = get_config().font_family.clone();
+    let family = String::from("Iosevka Term");
 
     MONO.set(family.clone());
     MONO_BOLD.set(family.clone());

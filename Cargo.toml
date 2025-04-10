@@ -19,13 +19,14 @@ members = ["data", "spotify"]
 
 [workspace.dependencies]
 librespot = { git = "https://github.com/librespot-org/librespot.git", branch = "dev" }
-tokio = { version = "1.44.2", features = ["rt"] }
+tokio = { version = "1.44.2", features = ["rt", "fs"] }
 chrono = { version = "0.4.40", features = ["serde"] }
 tokio-stream = { version = "0.1.17" }
 thiserror = "2.0.12"
 serde = { version = "1.0.219", features = ["derive"] }
 log = "0.4.27"
 strum = { version = "0.27.1", features = ["derive"] }
+anyhow = "1.0.97"
 iced = { version = "0.14.0-dev", default-features = false, features = [
   "wgpu",
   "tiny-skia",
@@ -37,12 +38,13 @@ iced = { version = "0.14.0-dev", default-features = false, features = [
 ] }
 
 [dependencies]
-log = { workspace = true }
-chrono = { workspace = true }
-iced = { workspace = true }
-tokio = { workspace = true, features = ["rt", "fs"] }
-thiserror = { workspace = true }
-serde = { workspace = true }
+log.workspace = true
+chrono.workspace = true
+iced.workspace = true
+anyhow.workspace = true
+tokio = { workspace = true, features = ["rt"] }
+thiserror.workspace = true
+serde.workspace = true
 tokio-stream = { workspace = true, features = ["fs"] }
 dirs = "6.0.0"
 toml = "0.8.20"

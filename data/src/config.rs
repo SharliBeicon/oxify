@@ -1,20 +1,17 @@
-use crate::environment;
+use crate::{
+    environment,
+    messages::{Message, OxifyMessage},
+};
 use iced::Theme;
 use serde::{Deserialize, Serialize};
-use std::{
-    fs,
-    sync::{LazyLock, RwLock, RwLockReadGuard, RwLockWriteGuard},
-};
+use std::sync::LazyLock;
+use tokio::runtime::Runtime;
+use tokio::sync::RwLock;
 
-static CONFIG: LazyLock<RwLock<Config>> = LazyLock::new(|| RwLock::new(Config::load()));
-
-pub fn get_config() -> RwLockReadGuard<'static, Config> {
-    CONFIG.read().unwrap()
-}
-
-pub fn get_config_mut() -> RwLockWriteGuard<'static, Config> {
-    CONFIG.write().unwrap()
-}
+pub static CONFIG: LazyLock<RwLock<Config>> = LazyLock::new(|| {
+    let rt = Runtime::new().unwrap();
+    rt.block_on(async { RwLock::new(Config::load().await) })
+});
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Config {
@@ -22,8 +19,6 @@ pub struct Config {
     pub window_size: (f32, f32),
     #[serde(default = "default_theme")]
     pub theme: String,
-    #[serde(default = "default_font_family")]
-    pub font_family: String,
     #[serde(default = "default_font_size")]
     pub font_size: f32,
 }
@@ -33,7 +28,6 @@ impl Default for Config {
         Self {
             window_size: default_window_size(),
             theme: default_theme(),
-            font_family: default_font_family(),
             font_size: default_font_size(),
         }
     }
@@ -77,24 +71,30 @@ fn default_theme() -> String {
     Theme::GruvboxDark.to_string()
 }
 
-fn default_font_family() -> String {
-    "Iosevka Term".into()
-}
-
 fn default_font_size() -> f32 {
     16.0
 }
 
 impl Config {
-    pub fn load() -> Self {
-        let config_path = environment::config_dir().join(environment::CONFIG_FILE_NAME);
+    pub async fn load() -> Self {
+        let config_dir = environment::config_dir();
+        if !config_dir.exists() {
+            log::info!("Config directory doesn't exist, creating it.");
+            if let Err(err) = tokio::fs::create_dir(&config_dir).await {
+                log::warn!("Cannot create config directory: {err}.\nUsing default config.");
+
+                return Config::default();
+            }
+        }
+
+        let config_path = config_dir.join(environment::CONFIG_FILE_NAME);
 
         log::debug!(
             "Looking for Config file in: {}",
             config_path.to_str().unwrap_or("")
         );
 
-        match fs::read_to_string(&config_path) {
+        match tokio::fs::read_to_string(&config_path).await {
             Ok(content) => toml::from_str(&content).unwrap_or_else(|err| {
                 log::warn!(
                     "Config file found but cannot be loaded: {err}\nUsing default config instead"
@@ -106,7 +106,10 @@ impl Config {
                     let config = Config::default();
                     log::warn!("Config file not found, creating a default one");
                     let content = toml::to_string(&config).unwrap_or(String::new());
-                    let _ = fs::write(config_path, content);
+
+                    if let Err(err) = tokio::fs::write(config_path, content).await {
+                        log::warn!("Cannot create config file: {err}.\nUsing default config.");
+                    }
 
                     config
                 }
@@ -115,7 +118,9 @@ impl Config {
         }
     }
 
-    pub fn reload(&mut self) {
-        *self = Self::load()
+    pub async fn reload(&mut self) -> Message {
+        *self = Config::load().await;
+
+        Message::OxifyMessage(OxifyMessage::ConfigReloaded)
     }
 }

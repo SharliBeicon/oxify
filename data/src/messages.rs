@@ -5,13 +5,14 @@ use librespot::oauth::OAuthToken;
 pub enum OxifyMessage {
     Logging(Vec<Record>),
     Token(Option<OAuthToken>),
+    ConfigReloaded,
 }
 
 #[derive(Debug, Clone)]
 pub enum WelcomeMessage {
     Login,
-    ReloadConfig,
     OpenConfigDir,
+    ReloadConfig,
     OpenWebsite,
 }
 

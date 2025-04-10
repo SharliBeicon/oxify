@@ -1,5 +1,4 @@
 use data::{
-    config::get_config_mut,
     environment::{self, WEBSITE_URL},
     font,
     messages::WelcomeMessage,
@@ -10,13 +9,14 @@ use iced::{
     Element, Length,
 };
 
-use crate::ui;
+use crate::appaerance as ui;
 
 #[derive(Debug, Default, Clone)]
 pub struct Welcome;
 
 pub enum WelcomeEvent {
     LoginAttempt,
+    ReloadConfigAttempt,
 }
 
 impl Welcome {
@@ -25,20 +25,17 @@ impl Welcome {
     }
 
     pub fn update(&mut self, message: WelcomeMessage) -> Option<WelcomeEvent> {
+        use WelcomeMessage as WM;
+
         match message {
-            WelcomeMessage::Login => Some(WelcomeEvent::LoginAttempt),
-            WelcomeMessage::ReloadConfig => {
-                get_config_mut().reload();
-
-                None
-            }
-
-            WelcomeMessage::OpenConfigDir => {
+            WM::Login => Some(WelcomeEvent::LoginAttempt),
+            WM::ReloadConfig => Some(WelcomeEvent::ReloadConfigAttempt),
+            WM::OpenConfigDir => {
                 let _ = open::that_detached(environment::config_dir());
 
                 None
             }
-            WelcomeMessage::OpenWebsite => {
+            WM::OpenWebsite => {
                 let _ = open::that_detached(WEBSITE_URL);
 
                 None

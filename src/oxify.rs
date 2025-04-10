@@ -1,6 +1,6 @@
-use crate::screen::{Screen, Welcome};
+use crate::screen::{Screen, Welcome, WelcomeEvent};
 use data::{
-    config::get_config,
+    config::CONFIG as config,
     log::Record,
     messages::{Message, OxifyMessage},
 };
@@ -18,7 +18,7 @@ pub struct Oxify {
 impl Oxify {
     pub fn new(log_stream: ReceiverStream<Vec<Record>>) -> (Self, Task<Message>) {
         let (main_window, open_main_window) = window::open(window::Settings {
-            size: get_config().window_size.into(),
+            size: config.blocking_read().window_size.into(),
             position: window::Position::Default,
             min_size: Some(MIN_SIZE),
             exit_on_close_request: true,
@@ -39,18 +39,23 @@ impl Oxify {
         match message {
             Message::OxifyMessage(oxify_message) => match oxify_message {
                 OxifyMessage::Logging(_) => Task::none(),
-                OxifyMessage::Token(oauth_token) => todo!(),
+                OxifyMessage::Token(_) => todo!(),
+                _ => Task::none(),
             },
             Message::WelcomeMessage(welcome_message) => {
                 let Screen::Welcome(welcome) = &mut self.screen else {
                     return Task::none();
                 };
 
-                if let None = welcome.update(welcome_message) {
-                    return Task::none();
+                match welcome.update(welcome_message) {
+                    Some(event) => match event {
+                        WelcomeEvent::LoginAttempt => Task::future(spotify::auth::login()),
+                        WelcomeEvent::ReloadConfigAttempt => {
+                            Task::future(async { config.write().await.reload().await })
+                        }
+                    },
+                    None => Task::none(),
                 }
-
-                Task::future(spotify::auth::login())
             }
         }
     }
@@ -65,7 +70,7 @@ impl Oxify {
     }
 
     pub fn theme(&self, _window: window::Id) -> Theme {
-        get_config().get_theme()
+        config.blocking_read().get_theme()
     }
 
     pub fn load_from_state(_: window::Id) -> (Oxify, Task<Message>) {

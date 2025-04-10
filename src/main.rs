@@ -1,11 +1,11 @@
-use data::{config::get_config, environment, font};
+use data::{config::CONFIG as config, environment, font};
 use oxify::Oxify;
 use std::env;
 
+mod appaerance;
 mod logger;
 mod oxify;
 mod screen;
-mod ui;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut args = env::args();
@@ -29,7 +29,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let settings = iced::Settings {
         default_font: font::MONO.clone().into(),
-        default_text_size: get_config().font_size.into(),
+        default_text_size: config.blocking_read().font_size.into(),
         id: None,
         antialiasing: false,
         fonts: font::load(),
