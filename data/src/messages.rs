@@ -1,11 +1,11 @@
-use crate::log::Record;
+use crate::{config::Config, log::Record};
 use librespot::oauth::OAuthToken;
 
 #[derive(Debug, Clone)]
 pub enum OxifyMessage {
     Logging(Vec<Record>),
     Token(Option<OAuthToken>),
-    ConfigReloaded,
+    ConfigReloaded(Config),
 }
 
 #[derive(Debug, Clone)]

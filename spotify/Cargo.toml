@@ -7,3 +7,6 @@ edition = "2024"
 data = { version = "0.1.0", path = "../data" }
 librespot.workspace = true
 log.workspace = true
+anyhow.workspace = true
+thiserror.workspace = true
+tokio.workspace = true

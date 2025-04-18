@@ -4,17 +4,33 @@ use crate::{
 };
 use iced::Theme;
 use serde::{Deserialize, Serialize};
-use std::sync::LazyLock;
-use tokio::runtime::Runtime;
-use tokio::sync::RwLock;
-
-pub static CONFIG: LazyLock<RwLock<Config>> = LazyLock::new(|| {
-    let rt = Runtime::new().unwrap();
-    rt.block_on(async { RwLock::new(Config::load().await) })
-});
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Config {
+    pub appaerance: Appaerance,
+    pub audio: Audio,
+}
+
+impl Default for Config {
+    fn default() -> Self {
+        Self {
+            appaerance: Appaerance {
+                window_size: default_window_size(),
+                theme: default_theme(),
+                font_size: default_font_size(),
+            },
+            audio: Audio {
+                format: default_audio_format(),
+                cache_limit_size: default_cache_limit_size(),
+                bitrate: default_bitrate(),
+                initial_volume: default_initial_volume(),
+            },
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Appaerance {
     #[serde(default = "default_window_size")]
     pub window_size: (f32, f32),
     #[serde(default = "default_theme")]
@@ -23,17 +39,7 @@ pub struct Config {
     pub font_size: f32,
 }
 
-impl Default for Config {
-    fn default() -> Self {
-        Self {
-            window_size: default_window_size(),
-            theme: default_theme(),
-            font_size: default_font_size(),
-        }
-    }
-}
-
-impl Config {
+impl Appaerance {
     pub fn get_theme(&self) -> Theme {
         match self.theme.as_str() {
             "Light" => Theme::Light,
@@ -63,6 +69,19 @@ impl Config {
     }
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Audio {
+    #[serde(default = "default_audio_format")]
+    pub format: String,
+    #[serde(default = "default_cache_limit_size")]
+    pub cache_limit_size: String,
+    #[serde(default = "default_bitrate")]
+    pub bitrate: u32,
+    #[serde(default = "default_initial_volume")]
+    pub initial_volume: u16,
+}
+
+// Appaerance
 fn default_window_size() -> (f32, f32) {
     (800.0, 600.0)
 }
@@ -73,6 +92,23 @@ fn default_theme() -> String {
 
 fn default_font_size() -> f32 {
     16.0
+}
+
+// Audio
+fn default_audio_format() -> String {
+    String::from("S16")
+}
+
+fn default_cache_limit_size() -> String {
+    String::from("2G")
+}
+
+fn default_bitrate() -> u32 {
+    160
+}
+
+fn default_initial_volume() -> u16 {
+    50
 }
 
 impl Config {
@@ -118,9 +154,9 @@ impl Config {
         }
     }
 
-    pub async fn reload(&mut self) -> Message {
-        *self = Config::load().await;
+    pub async fn reload(&self) -> Message {
+        let new_config = Config::load().await;
 
-        Message::OxifyMessage(OxifyMessage::ConfigReloaded)
+        Message::OxifyMessage(OxifyMessage::ConfigReloaded(new_config))
     }
 }
