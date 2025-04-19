@@ -38,6 +38,7 @@ impl Display for OAuthError {
         }
     }
 }
+
 pub async fn login() -> Message {
     let client = match OAuthClientBuilder::new(CLIENT_ID, CALLBACK_URL, OAUTH_SCOPES.to_vec())
         .open_in_browser()

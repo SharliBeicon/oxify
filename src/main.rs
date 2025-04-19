@@ -1,4 +1,5 @@
-use data::{environment, font, Config};
+use anyhow::Result;
+use data::{environment, font, spotify::Setup, Config};
 use oxify::Oxify;
 use std::env;
 use tokio::runtime::Runtime;
@@ -8,7 +9,7 @@ mod logger;
 mod oxify;
 mod screen;
 
-fn main() -> anyhow::Result<()> {
+fn main() -> Result<()> {
     let mut args = env::args();
     args.next();
 
@@ -28,14 +29,16 @@ fn main() -> anyhow::Result<()> {
 
     crate::font::set();
 
-    let config = (|| {
-        let Ok(rt) = Runtime::new() else {
-            log::warn!("Cannot load rt runtime to load config. Falling back to a default one.");
-            return Config::default();
-        };
+    let (config, setup) = (|| -> Result<(Config, Setup)> {
+        let rt = Runtime::new()?;
 
-        rt.block_on(async { Config::load().await })
-    })();
+        rt.block_on(async {
+            let config = Config::load().await;
+            let setup = Setup::load(config.clone(), None).await?;
+
+            Ok((config, setup))
+        })
+    })()?;
 
     let settings = iced::Settings {
         default_font: font::MONO.clone().into(),
@@ -48,7 +51,7 @@ fn main() -> anyhow::Result<()> {
     iced::daemon("Oxify", Oxify::update, Oxify::view)
         .theme(Oxify::theme)
         .settings(settings)
-        .run_with(move || Oxify::new(log_stream, config))
+        .run_with(move || Oxify::new(log_stream, config, setup))
         .inspect_err(|err| log::error!("{}", err))?;
 
     Ok(())
