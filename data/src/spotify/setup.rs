@@ -84,10 +84,14 @@ impl Setup {
                     tokio::fs::create_dir(&cache_dir)
                         .await
                         .ok()
-                        .map(|_| cache_dir.clone())
-                } else {
-                    None
-                }
+                        .map(|_| cache_dir.clone());
+                };
+
+                log::info!(
+                    "Using {} as a credentials cache path.",
+                    cache_dir.to_str().unwrap_or_default()
+                );
+                cache_dir
             };
 
             let data_path = {
@@ -97,17 +101,21 @@ impl Setup {
                     tokio::fs::create_dir(&data_dir)
                         .await
                         .ok()
-                        .map(|_| data_dir.clone())
-                } else {
-                    None
-                }
+                        .map(|_| data_dir.clone());
+                };
+
+                log::info!(
+                    "Using {} as a data path.",
+                    data_dir.to_str().unwrap_or_default()
+                );
+                data_dir
             };
 
             let limit = parse_file_size(&config.audio.cache_limit_size)?;
             match Cache::new(
-                credentials_path.clone(),
-                credentials_path,
-                data_path,
+                Some(credentials_path.clone()),
+                Some(credentials_path),
+                Some(data_path),
                 Some(limit),
             ) {
                 Ok(cache) => Some(cache),

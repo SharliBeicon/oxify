@@ -1,6 +1,6 @@
 use data::messages::{Message, OxifyMessage};
 use librespot::oauth::OAuthClientBuilder;
-use std::fmt::Display;
+use thiserror::Error;
 
 const CLIENT_ID: &str = "a4df561fbabb40a3b3ead45196990b6d";
 const CALLBACK_URL: &str = "http://localhost:60069/authorization/callback";
@@ -24,19 +24,12 @@ const OAUTH_SCOPES: [&str; 16] = [
 ];
 
 pub use librespot::oauth::OAuthToken;
-#[derive(Clone, Debug)]
+#[derive(Debug, Error)]
 pub enum OAuthError {
-    Error(String),
+    #[error(transparent)]
+    Error(#[from] librespot::oauth::OAuthError),
+    #[error("Auth token not defined yet")]
     Undefined,
-}
-
-impl Display for OAuthError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            OAuthError::Error(err) => write!(f, "{}", err),
-            OAuthError::Undefined => write!(f, "Auth token not defined yet"),
-        }
-    }
 }
 
 pub async fn login() -> Message {

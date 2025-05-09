@@ -1,6 +1,6 @@
 use data::spotify::Setup;
 use librespot::{
-    core::Session,
+    core::{Session, cache::Cache},
     discovery::Credentials,
     playback::{mixer::Mixer, player::Player},
 };
@@ -12,6 +12,7 @@ pub struct Service {
     pub credentials: Credentials,
     pub mixer: Arc<dyn Mixer>,
     pub player: Arc<Player>,
+    pub cache: Option<Cache>,
 }
 
 impl Service {
@@ -39,11 +40,14 @@ impl Service {
             player.set_session(session.clone());
         }
 
+        let cache = setup.cache.clone();
+
         Some(Self {
             session,
             credentials,
             mixer,
             player,
+            cache,
         })
     }
 }

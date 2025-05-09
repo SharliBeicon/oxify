@@ -21,7 +21,6 @@ pub struct Oxify {
     pub service: Option<Service>,
     pub screen: Screen,
     pub config: Config,
-    pub setup: Setup,
 }
 
 impl Oxify {
@@ -40,7 +39,7 @@ impl Oxify {
 
         let service = Service::load(&setup);
 
-        let (oxify, command) = Oxify::load_from_state(main_window, config, service, setup);
+        let (oxify, command) = Oxify::load_from_state(main_window, config, service);
         let commands = vec![
             open_main_window.then(|_| Task::none()),
             command,
@@ -67,12 +66,21 @@ impl Oxify {
                 OxifyMessage::Setup(Some(setup)) => {
                     let service = Service::load(&setup);
 
-                    let (oxify, _) =
-                        Oxify::load_from_state(self.id, self.config.clone(), service, setup);
+                    if let Some(Service {
+                        cache: Some(ref cache),
+                        ref credentials,
+                        ..
+                    }) = service
+                    {
+                        cache.save_credentials(credentials);
+                    }
+
+                    let (oxify, command) =
+                        Oxify::load_from_state(self.id, self.config.clone(), service);
 
                     *self = oxify;
 
-                    Task::none()
+                    command
                 }
                 _ => Task::none(),
             },
@@ -112,7 +120,6 @@ impl Oxify {
         id: window::Id,
         config: Config,
         service: Option<Service>,
-        setup: Setup,
     ) -> (Oxify, Task<Message>) {
         let screen = service.as_ref().map_or_else(
             || Screen::Welcome(Welcome::new()),
@@ -124,7 +131,6 @@ impl Oxify {
             service,
             screen,
             config,
-            setup,
         };
 
         (oxify, Task::none())
