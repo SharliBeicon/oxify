@@ -1,8 +1,5 @@
-use data::{
-    environment::{self, WEBSITE_URL},
-    font,
-    messages::WelcomeMessage,
-};
+use crate::context::environment::{self, WEBSITE_URL};
+use crate::data::{font, messages::WelcomeMessage};
 use iced::{
     alignment,
     widget::{button, column, container, image, row, text, vertical_space},

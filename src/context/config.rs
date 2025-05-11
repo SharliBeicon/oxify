@@ -1,9 +1,11 @@
 use crate::{
+    data::messages::{Message, OxifyMessage},
     environment,
-    messages::{Message, OxifyMessage},
 };
+use anyhow::Result;
 use iced::Theme;
 use serde::{Deserialize, Serialize};
+use tokio::runtime::Runtime;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Config {
@@ -155,8 +157,22 @@ impl Config {
     }
 
     pub async fn reload(&self) -> Message {
-        let new_config = Config::load().await;
+        let new_config = (|| -> Result<Config> {
+            let rt = Runtime::new()?;
 
-        Message::OxifyMessage(OxifyMessage::ConfigReloaded(new_config))
+            rt.block_on(async {
+                let config = Config::load().await;
+
+                Ok(config)
+            })
+        })();
+
+        match new_config {
+            Ok(new_config) => Message::OxifyMessage(OxifyMessage::ConfigReloaded(new_config)),
+            Err(e) => {
+                log::error!("Cannot reload the config: {e}. Using the same as before.");
+                Message::OxifyMessage(OxifyMessage::ConfigReloaded(self.clone()))
+            }
+        }
     }
 }

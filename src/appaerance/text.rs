@@ -18,7 +18,7 @@ pub fn secondary(theme: &Theme) -> Style {
 
 pub fn tertiary(theme: &Theme) -> Style {
     Style {
-        color: Some(theme.extended_palette().warning.base.color),
+        color: Some(theme.extended_palette().danger.base.color),
     }
 }
 

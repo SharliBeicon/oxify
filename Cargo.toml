@@ -4,7 +4,7 @@ version = "0.0.1-dev"
 edition = "2021"
 authors = ["Carlos Tocino <carlostocinocubelo@gmail.com>"]
 description = "Lightweight, customizable Spotify client"
-rust-version = "1.84.1"
+rust-version = "1.86.0"
 readme = "README.md"
 homepage = "https://oxify.rs"
 license = "MIT"
@@ -13,48 +13,22 @@ repository = "https://github.com/sharlibeicon/oxify"
 [[bin]]
 name = "oxify"
 
-[workspace]
-resolver = "2"
-members = ["data", "spotify"]
-
-[workspace.dependencies]
-librespot = { git = "https://github.com/librespot-org/librespot.git", branch = "dev" }
-tokio = { version = "1.44.2", features = ["rt", "fs"] }
-chrono = { version = "0.4.40", features = ["serde"] }
-tokio-stream = { version = "0.1.17" }
-thiserror = "2.0.12"
-serde = { version = "1.0.219", features = ["derive"] }
-log = "0.4.27"
-strum = { version = "0.27.1", features = ["derive"] }
-anyhow = "1.0.97"
-iced = { version = "0.14.0-dev", default-features = false, features = [
-  "wgpu",
-  "tiny-skia",
-  "fira-sans",
-  "tokio",
-  "lazy",
-  "advanced",
-  "image",
-] }
-
 [dependencies]
-log.workspace = true
-chrono.workspace = true
-iced.workspace = true
-anyhow.workspace = true
-tokio = { workspace = true, features = ["rt"] }
-thiserror.workspace = true
-serde.workspace = true
-tokio-stream = { workspace = true, features = ["fs"] }
-dirs = "6.0.0"
-toml = "0.8.20"
+librespot = { git = "https://github.com/librespot-org/librespot.git", branch = "dev" }
+anyhow = "1.0.98"
+iced = { version = "0.13.1", features = ["image"] }
+tokio = { version = "1.45.0", features = ["fs"] }
+chrono = "0.4.41"
+serde = { version = "1.0.219", features = ["derive"] }
+toml = "0.8.22"
+log = "0.4.27"
 fern = "0.7.1"
-data = { version = "0.1.0", path = "data" }
-spotify = { version = "0.1.0", path = "spotify" }
+tokio-stream = "0.1.17"
+dirs-next = "2.0.0"
+xdg = "3.0.0"
+strum = { version = "0.27.1", features = ["derive"] }
+thiserror = "2.0.12"
 open = "5.3.2"
-
-[patch.crates-io]
-iced = { git = "https://github.com/iced-rs/iced", rev = "1b22d7d5fcdf519a3cac7a3cfd14398a3108c3b8" }
 
 [profile.dev]
 opt-level = 0

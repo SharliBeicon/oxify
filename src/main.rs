@@ -1,13 +1,16 @@
-use anyhow::Result;
-use data::{environment, font, spotify::Setup, Config};
-use oxify::Oxify;
-use std::env;
-use tokio::runtime::Runtime;
-
 mod appaerance;
+mod context;
+mod data;
 mod logger;
 mod oxify;
 mod screen;
+
+use crate::data::font;
+use anyhow::Result;
+use context::{config::Config, environment};
+use oxify::Oxify;
+use std::env;
+use tokio::runtime::Runtime;
 
 fn main() -> Result<()> {
     let mut args = env::args();
@@ -27,16 +30,15 @@ fn main() -> Result<()> {
     log::info!("config dir: {:?}", environment::config_dir());
     log::info!("data dir: {:?}", environment::data_dir());
 
-    crate::font::set();
+    font::set();
 
-    let (config, setup) = (|| -> Result<(Config, Setup)> {
+    let config = (|| -> Result<Config> {
         let rt = Runtime::new()?;
 
         rt.block_on(async {
             let config = Config::load().await;
-            let setup = Setup::load(config.clone(), None).await?;
 
-            Ok((config, setup))
+            Ok(config)
         })
     })()?;
 
@@ -51,7 +53,7 @@ fn main() -> Result<()> {
     iced::daemon("Oxify", Oxify::update, Oxify::view)
         .theme(Oxify::theme)
         .settings(settings)
-        .run_with(move || Oxify::new(log_stream, config, setup))
+        .run_with(move || Oxify::new(log_stream, config))
         .inspect_err(|err| log::error!("{}", err))?;
 
     Ok(())

@@ -1,6 +1,5 @@
+use crate::data::log::{file, Error, Record};
 use chrono::Utc;
-use data::log::{Error, Record};
-use log::Log;
 use std::{
     env, mem,
     sync::mpsc,
@@ -14,9 +13,9 @@ pub fn setup(is_debug: bool) -> Result<ReceiverStream<Vec<Record>>, Error> {
     let level_filter = env::var("RUST_LOG")
         .ok()
         .as_deref()
-        .map(str::parse::<log::Level>)
+        .map(str::parse::<::log::Level>)
         .transpose()?
-        .unwrap_or(log::Level::Debug)
+        .unwrap_or(::log::Level::Debug)
         .to_level_filter();
 
     let mut io_sink = fern::Dispatch::new().format(|out, message, record| {
@@ -31,7 +30,7 @@ pub fn setup(is_debug: bool) -> Result<ReceiverStream<Vec<Record>>, Error> {
     if is_debug {
         io_sink = io_sink.chain(std::io::stdout());
     } else {
-        let log_file = data::log::file()?;
+        let log_file = file()?;
 
         io_sink = io_sink.chain(log_file);
     }
@@ -39,9 +38,9 @@ pub fn setup(is_debug: bool) -> Result<ReceiverStream<Vec<Record>>, Error> {
     let (channel_sink, receiver) = channel_logger();
 
     fern::Dispatch::new()
-        .level(log::LevelFilter::Off)
-        .level_for("panic", log::LevelFilter::Error)
-        .level_for("iced_wgpu", log::LevelFilter::Info)
+        .level(::log::LevelFilter::Off)
+        .level_for("panic", ::log::LevelFilter::Error)
+        .level_for("iced_wgpu", ::log::LevelFilter::Info)
         .level_for("data", level_filter)
         .level_for("oxify", level_filter)
         .chain(io_sink)
@@ -51,7 +50,7 @@ pub fn setup(is_debug: bool) -> Result<ReceiverStream<Vec<Record>>, Error> {
     Ok(receiver)
 }
 
-fn channel_logger() -> (Box<dyn Log>, ReceiverStream<Vec<Record>>) {
+fn channel_logger() -> (Box<dyn ::log::Log>, ReceiverStream<Vec<Record>>) {
     let (log_sender, log_receiver) = mpsc::channel();
     let (async_sender, async_receiver) = tokio_mpsc::channel(1);
 
@@ -59,7 +58,7 @@ fn channel_logger() -> (Box<dyn Log>, ReceiverStream<Vec<Record>>) {
         sender: mpsc::Sender<Record>,
     }
 
-    impl Log for Sink {
+    impl ::log::Log for Sink {
         fn enabled(&self, _metadata: &::log::Metadata) -> bool {
             true
         }

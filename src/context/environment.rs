@@ -38,9 +38,8 @@ fn platform_specific_config_dir() -> PathBuf {
 
 #[cfg(target_os = "macos")]
 fn xdg_config_dir() -> Option<PathBuf> {
-    let config_dir = xdg::BaseDirectories::with_prefix("oxify")
-        .ok()
-        .and_then(|xdg| xdg.find_config_file(CONFIG_FILE_NAME))?;
+    let config_dir =
+        xdg::BaseDirectories::with_prefix("oxify").find_config_file(CONFIG_FILE_NAME)?;
 
     config_dir.parent().map(|p| p.to_path_buf())
 }
