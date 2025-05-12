@@ -5,6 +5,7 @@ use crate::{
         messages::{Message, OxifyMessage},
     },
     screen::{Screen, Welcome, WelcomeEvent},
+    spotify::{Service, Setup},
 };
 use iced::{
     widget::container,
@@ -17,14 +18,19 @@ const MIN_SIZE: Size = Size::new(400.0, 300.0);
 
 #[derive(Clone)]
 pub struct Oxify {
-    pub id: Id,
     pub screen: Screen,
     pub config: Config,
+    pub setup: Setup,
+    pub service: Option<Service>,
 }
 
 impl Oxify {
-    pub fn new(log_stream: ReceiverStream<Vec<Record>>, config: Config) -> (Self, Task<Message>) {
-        let (main_window, open_main_window) = window::open(window::Settings {
+    pub fn new(
+        log_stream: ReceiverStream<Vec<Record>>,
+        config: Config,
+        setup: Setup,
+    ) -> (Self, Task<Message>) {
+        let (_, open_main_window) = window::open(window::Settings {
             size: config.appaerance.window_size.into(),
             position: window::Position::Default,
             min_size: Some(MIN_SIZE),
@@ -33,9 +39,10 @@ impl Oxify {
         });
 
         let oxify = Self {
-            id: main_window,
             screen: Screen::Welcome(Welcome::new()),
             config,
+            setup,
+            service: None,
         };
 
         let commands = vec![

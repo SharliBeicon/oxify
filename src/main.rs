@@ -4,11 +4,13 @@ mod data;
 mod logger;
 mod oxify;
 mod screen;
+mod spotify;
 
 use crate::data::font;
 use anyhow::Result;
 use context::{config::Config, environment};
 use oxify::Oxify;
+use spotify::Setup;
 use std::env;
 use tokio::runtime::Runtime;
 
@@ -32,13 +34,14 @@ fn main() -> Result<()> {
 
     font::set();
 
-    let config = (|| -> Result<Config> {
+    let (config, setup) = (|| -> Result<(Config, Setup)> {
         let rt = Runtime::new()?;
 
         rt.block_on(async {
             let config = Config::load().await;
+            let setup = Setup::load(config.clone(), None).await?;
 
-            Ok(config)
+            Ok((config, setup))
         })
     })()?;
 
@@ -53,7 +56,7 @@ fn main() -> Result<()> {
     iced::daemon("Oxify", Oxify::update, Oxify::view)
         .theme(Oxify::theme)
         .settings(settings)
-        .run_with(move || Oxify::new(log_stream, config))
+        .run_with(move || Oxify::new(log_stream, config, setup))
         .inspect_err(|err| log::error!("{}", err))?;
 
     Ok(())
