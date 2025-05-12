@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Oxify Authorization</title>
+    <style>
+      body {
+        background-color: #282828;
+        color: #f9f9f9;
+        font-family: "Courier New", Courier, monospace;
+        text-align: center;
+        padding: 50px;
+      }
+
+      h1 {
+        font-size: 2.5em;
+        margin-bottom: 0.5em;
+        color: #dea584;
+      }
+
+      p {
+        font-size: 1.1em;
+        color: #cccccc;
+      }
+
+      .success {
+        font-size: 1.3em;
+        color: #9acd32;
+        font-weight: bold;
+        margin: 20px 0;
+      }
+
+      button {
+        background-color: #dea584;
+        color: #282828;
+        border: none;
+        padding: 12px 30px;
+        font-size: 1em;
+        font-weight: bold;
+        cursor: pointer;
+        border-radius: 3px;
+        transition: background-color 0.3s ease;
+      }
+
+      button:hover {
+        background-color: #f0a97e;
+      }
+
+      .container {
+        max-width: 600px;
+        margin: 0 auto;
+        padding: 20px;
+        border: 2px solid #dea584;
+        border-radius: 5px;
+        background-color: #1c1c1c;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+      }
+
+      a {
+        color: #f9f9f9;
+        text-decoration: none;
+        font-weight: bold;
+        border-bottom: 2px solid #9acd32;
+      }
+
+      a:hover {
+        border-bottom: 2px solid #f0a97e;
+      }
+    </style>
+    <script>
+      function closeWindow() {
+        window.open("", "_self", ""); // Required for some browsers
+        window.close();
+      }
+    </script>
+  </head>
+
+  <body>
+    <div class="container">
+      <h1>Oxify</h1>
+      <p>Authorization was successful!</p>
+      <div class="success">✔ Access granted</div>
+      <p>You're now ready to return to Oxify and enjoy your music.</p>
+      <button onclick="closeWindow()">Close this Tab</button>
+    </div>
+  </body>
+</html>
